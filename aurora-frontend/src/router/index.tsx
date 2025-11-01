@@ -24,6 +24,10 @@ import QuickBookingConfirmPage from "@/pages/client/guest/booking/QuickBookingCo
 
 // Authentication pages
 import AuthPage from "@/pages/client/guest/auth";
+import RegisterPage from "@/pages/client/guest/auth/Register";
+import LoginPage from "@/pages/client/guest/auth/Login";
+import ForgotPasswordPage from "@/pages/client/guest/auth/ForgotPassword";
+import ResetPasswordPage from "@/pages/client/guest/auth/ResetPassword";
 
 // Payment pages
 import PaymentReturn from "@/pages/client/PaymentReturn";
@@ -129,6 +133,15 @@ const router = createBrowserRouter([
       // Guest - Quick Booking
       { path: "booking/new", element: <QuickBookingPage /> },
       { path: "booking/confirm", element: <QuickBookingConfirmPage /> },
+
+      // Guest - Authentication
+      { path: "register", element: <RegisterPage /> },
+      { path: "login", element: <LoginPage /> },
+      { path: "forgot-password", element: <ForgotPasswordPage /> },
+      { path: "reset-password", element: <ResetPasswordPage /> },
+
+      // Guest - Payment Return (public for VNPay redirect)
+      { path: "payment/return", element: <PaymentReturn /> },
 
       // ==================== CUSTOMER ROUTES (cần đăng nhập) ====================
       { path: "customer/profile", element: <CustomerProfilePage /> },
