@@ -5,7 +5,7 @@ public final class PermissionConstants {
     private PermissionConstants() {}
 
     public static final class Guest {
-        public static final String HOTEL_VIEW = "HOTEL_VIEW";
+        public static final String BRANCH_VIEW = "BRANCH_VIEW";
         public static final String ROOM_VIEW = "ROOM_VIEW";
         public static final String ROOM_SEARCH = "ROOM_SEARCH";
         public static final String PROMOTION_VIEW = "PROMOTION_VIEW";
@@ -22,6 +22,9 @@ public final class PermissionConstants {
         public static final String PROFILE_VIEW = "PROFILE_VIEW";
         public static final String PROFILE_UPDATE = "PROFILE_UPDATE";
         public static final String SERVICE_REGISTER = "SERVICE_REGISTER";
+        public static final String REVIEW_CREATE = "REVIEW_CREATE";
+        public static final String REVIEW_UPDATE_OWN = "REVIEW_UPDATE_OWN";
+        public static final String REVIEW_DELETE_OWN = "REVIEW_DELETE_OWN";
     }
 
     public static final class Staff {
@@ -35,6 +38,7 @@ public final class PermissionConstants {
         public static final String CUSTOMER_VIEW = "CUSTOMER_VIEW";
         public static final String PAYMENT_VIEW_ALL = "PAYMENT_VIEW_ALL";
         public static final String SERVICE_MANAGE = "SERVICE_MANAGE";
+        public static final String REVIEW_VIEW_ALL = "REVIEW_VIEW_ALL";
     }
 
     public static final class Manager {
@@ -46,13 +50,17 @@ public final class PermissionConstants {
         public static final String PROMOTION_CREATE = "PROMOTION_CREATE";
         public static final String PROMOTION_UPDATE = "PROMOTION_UPDATE";
         public static final String PROMOTION_DELETE = "PROMOTION_DELETE";
-        public static final String HOTEL_UPDATE = "HOTEL_UPDATE";
+        public static final String BRANCH_VIEW = "BRANCH_VIEW";
+        public static final String BRANCH_VIEW_STATS = "BRANCH_VIEW_STATS";
         public static final String REPORT_VIEW = "REPORT_VIEW";
         public static final String REPORT_EXPORT = "REPORT_EXPORT";
         public static final String STAFF_VIEW = "STAFF_VIEW";
+        public static final String REVIEW_VIEW_ALL = "REVIEW_VIEW_ALL";
+        public static final String REVIEW_MODERATE = "REVIEW_MODERATE";
     }
 
     public static final class Admin {
+        public static final String USER_VIEW = "USER_VIEW";
         public static final String USER_CREATE = "USER_CREATE";
         public static final String USER_UPDATE = "USER_UPDATE";
         public static final String USER_DELETE = "USER_DELETE";
@@ -65,7 +73,13 @@ public final class PermissionConstants {
         public static final String SYSTEM_CONFIG = "SYSTEM_CONFIG";
         public static final String BACKUP_MANAGE = "BACKUP_MANAGE";
         public static final String LOG_VIEW = "LOG_VIEW";
-        public static final String HOTEL_CREATE = "HOTEL_CREATE";
-        public static final String HOTEL_DELETE = "HOTEL_DELETE";
+        public static final String BRANCH_CREATE = "BRANCH_CREATE";
+        public static final String BRANCH_UPDATE = "BRANCH_UPDATE";
+        public static final String BRANCH_DELETE = "BRANCH_DELETE";
+        public static final String BRANCH_ASSIGN_MANAGER = "BRANCH_ASSIGN_MANAGER";
+        public static final String BRANCH_REMOVE_MANAGER = "BRANCH_REMOVE_MANAGER";
+        public static final String REVIEW_VIEW_ALL = "REVIEW_VIEW_ALL";
+        public static final String REVIEW_MODERATE = "REVIEW_MODERATE";
+        public static final String REVIEW_UPDATE_ALL = "REVIEW_UPDATE_ALL";
     }
 }
