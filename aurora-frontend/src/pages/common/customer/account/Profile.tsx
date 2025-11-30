@@ -1,7 +1,11 @@
 import { motion, useInView } from "framer-motion";
 import { useRef, useState } from "react";
 import { User, Mail, Phone, MapPin, Calendar, Edit, Camera } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+
+// ===================== API CONFIGURATION =====================
+const USE_API = false; // Đổi thành true khi muốn dùng API thực
+const API_BASE_URL = '/api'; // Thay đổi base URL của API ở đây
+// ============================================================
 
 // Mock user data
 const userData = {
@@ -17,7 +21,6 @@ export default function CustomerProfilePage() {
   const [activeTab, setActiveTab] = useState("personal");
   const profileRef = useRef(null);
   const profileInView = useInView(profileRef, { once: true, margin: "-50px" });
-  const navigate = useNavigate();
 
   const fadeInUp = {
     hidden: { opacity: 0, y: 40 },
@@ -45,6 +48,35 @@ export default function CustomerProfilePage() {
         staggerChildren: 0.15,
         delayChildren: 0.2
       }
+    }
+  };
+
+  // Handle avatar upload - Ready for API
+  const handleAvatarUpload = async (file: File) => {
+    if (!USE_API) {
+      console.log('Mock: Avatar uploaded', file.name);
+      return;
+    }
+
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await fetch(`${API_BASE_URL}/user/avatar`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: formData
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+      const data = await response.json();
+      console.log('Avatar uploaded:', data.avatarUrl);
+      // TODO: Update UI with new avatar
+    } catch (err) {
+      console.error('Error uploading avatar:', err);
+      alert('Không thể tải ảnh lên. Vui lòng thử lại.');
     }
   };
 
@@ -88,13 +120,22 @@ export default function CustomerProfilePage() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                <motion.button
+                <motion.label
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  className="absolute bottom-0 right-0 bg-green-500 text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition-colors"
+                  className="absolute bottom-0 right-0 bg-green-500 text-white p-3 rounded-full shadow-lg hover:bg-green-600 transition-colors cursor-pointer"
                 >
                   <Camera className="w-5 h-5" />
-                </motion.button>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleAvatarUpload(file);
+                    }}
+                  />
+                </motion.label>
               </motion.div>
 
               <div className="text-center md:text-left flex-1">
@@ -108,7 +149,7 @@ export default function CustomerProfilePage() {
               <motion.button
                 whileHover={{ scale: 1.05, boxShadow: "0 10px 30px rgba(34, 197, 94, 0.3)" }}
                 whileTap={{ scale: 0.95 }}
-                onClick={() => window.location.href = '/customer/profile/upsert'}
+                onClick={() => window.location.href = '/profile/upsert'}
                 className="bg-green-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-600 transition-all flex items-center gap-2 shadow-lg"
               >
                 <Edit className="w-5 h-5" />
@@ -188,7 +229,7 @@ export default function CustomerProfilePage() {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate("/customer/booking/create")}
+                  onClick={() => window.location.href = "/booking/create"}
                   className="bg-green-500 text-white px-8 py-3 rounded-xl font-semibold hover:bg-green-600 transition-all"
                 >
                   Đặt Phòng Ngay
