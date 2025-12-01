@@ -1,5 +1,6 @@
 package com.aurora.backend.service;
 
+import com.aurora.backend.dto.request.ProfileUpdateRequest;
 import com.aurora.backend.dto.request.UserCreationRequest;
 import com.aurora.backend.dto.request.UserRegistrationRequest;
 import com.aurora.backend.dto.request.UserUpdateRequest;
@@ -14,9 +15,11 @@ public interface UserService {
     UserResponse createUser(UserCreationRequest request);
     List<UserResponse> getUsers();
     Page<UserResponse> getUsersWithPagination(Pageable pageable);
+    Page<UserResponse> getUsersByRoleName(String roleName, Pageable pageable);
     UserResponse getUser(String id);
     UserResponse getUserByUsername(String username);
     UserResponse updateUser(String id, UserUpdateRequest request);
+    UserResponse updateMyProfile(String id, ProfileUpdateRequest request);
     void deleteUser(String id);
     Page<UserResponse> searchUsersByUsername(String username, Pageable pageable);
     

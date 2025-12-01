@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.aurora.backend.config.annotation.RequirePermission;
 import com.aurora.backend.constant.PermissionConstants;
+import com.aurora.backend.dto.request.ProfileUpdateRequest;
 import com.aurora.backend.dto.request.UserCreationRequest;
 import com.aurora.backend.dto.request.UserRegistrationRequest;
 import com.aurora.backend.dto.request.UserUpdateRequest;
@@ -58,6 +59,21 @@ public class UserController {
                 .build();
     }
 
+    @PutMapping("/myInfo")
+    @RequirePermission(PermissionConstants.Customer.PROFILE_UPDATE)
+    ApiResponse<UserResponse> updateMyInfo(@RequestBody @Valid ProfileUpdateRequest request) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsername = authentication.getName();
+        log.info("Updating current user info for: {}", currentUsername);
+        
+        UserResponse currentUser = userService.getUserByUsername(currentUsername);
+        
+        return ApiResponse.<UserResponse>builder()
+                .message("User info updated successfully")
+                .result(userService.updateMyProfile(currentUser.getId(), request))
+                .build();
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     @RequirePermission(PermissionConstants.Admin.USER_CREATE)
@@ -99,6 +115,29 @@ public class UserController {
         return ApiResponse.<Page<UserResponse>>builder()
                 .message("Users paginated successfully")
                 .result(userService.getUsersWithPagination(pageable))
+                .build();
+    }
+
+    @GetMapping("/role/{roleName}")
+    @RequirePermission({PermissionConstants.Admin.ROLE_CREATE})
+    ApiResponse<Page<UserResponse>> getUsersByRole(
+            @PathVariable("roleName") String roleName,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "username") String sortBy,
+            @RequestParam(defaultValue = "asc") String sortDirection) {
+        
+        log.info("Fetching users with role: {} - page: {}, size: {}", roleName, page, size);
+        
+        Sort sort = sortDirection.equalsIgnoreCase("desc") 
+                ? Sort.by(sortBy).descending() 
+                : Sort.by(sortBy).ascending();
+        
+        Pageable pageable = PageRequest.of(page, size, sort);
+        
+        return ApiResponse.<Page<UserResponse>>builder()
+                .message("Users by role retrieved successfully")
+                .result(userService.getUsersByRoleName(roleName, pageable))
                 .build();
     }
 

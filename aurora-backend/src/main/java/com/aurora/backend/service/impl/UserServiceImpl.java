@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import com.aurora.backend.dto.request.ProfileUpdateRequest;
 import com.aurora.backend.dto.request.UserCreationRequest;
 import com.aurora.backend.dto.request.UserRegistrationRequest;
 import com.aurora.backend.dto.request.UserUpdateRequest;
@@ -123,6 +124,14 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Page<UserResponse> getUsersByRoleName(String roleName, Pageable pageable) {
+        log.info("Fetching users with role: {} - page {}, size {}",
+                roleName, pageable.getPageNumber(), pageable.getPageSize());
+        return userRepository.findAllByRoleNamePaginated(roleName, pageable)
+                .map(userMapper::toUserResponse);
+    }
+
+    @Override
     public UserResponse getUser(String id) {
         log.info("Fetching user by ID: {}", id);
         User user = userRepository.findById(id)
@@ -164,6 +173,40 @@ public class UserServiceImpl implements UserService {
         User updatedUser = userRepository.save(user);
 
         log.info("User updated successfully with ID: {}", updatedUser.getId());
+        return userMapper.toUserResponse(updatedUser);
+    }
+
+    @Override
+    @Transactional
+    public UserResponse updateMyProfile(String id, ProfileUpdateRequest request) {
+        log.info("Updating profile for user with ID: {}", id);
+
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        // Only update basic profile fields (not active, roles, etc.)
+        if (request.getFirstName() != null) {
+            user.setFirstName(request.getFirstName());
+        }
+        if (request.getLastName() != null) {
+            user.setLastName(request.getLastName());
+        }
+        if (request.getDob() != null) {
+            user.setDob(request.getDob());
+        }
+        if (request.getPhone() != null) {
+            user.setPhone(request.getPhone());
+        }
+        if (request.getEmail() != null) {
+            user.setEmail(request.getEmail());
+        }
+        if (request.getAddress() != null) {
+            user.setAddress(request.getAddress());
+        }
+
+        User updatedUser = userRepository.save(user);
+
+        log.info("Profile updated successfully for user ID: {}", updatedUser.getId());
         return userMapper.toUserResponse(updatedUser);
     }
 

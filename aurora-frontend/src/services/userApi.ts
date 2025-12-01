@@ -4,6 +4,7 @@ import type {
   User, 
   UserCreationRequest, 
   UserUpdateRequest, 
+  ProfileUpdateRequest,
   UserSearchParams,
   UpdateUserPermissionsRequest
 } from '@/types/user.types';
@@ -23,6 +24,24 @@ export const getUsers = async (): Promise<ApiResponse<User[]>> => {
  */
 export const getUsersPaginated = async (params?: UserSearchParams): Promise<ApiResponse<PageResponseDto<User>>> => {
   const response = await axiosClient.get(`${BASE_URL}/paginated`, { 
+    params: {
+      page: params?.page ?? 0,
+      size: params?.size ?? 10,
+      sortBy: params?.sortBy ?? 'username',
+      sortDirection: params?.sortDir ?? 'asc',
+    }
+  });
+  return response.data;
+};
+
+/**
+ * Get users by role name with pagination
+ */
+export const getUsersByRole = async (
+  roleName: string,
+  params?: { page?: number; size?: number; sortBy?: string; sortDir?: string }
+): Promise<ApiResponse<PageResponseDto<User>>> => {
+  const response = await axiosClient.get(`${BASE_URL}/role/${roleName}`, {
     params: {
       page: params?.page ?? 0,
       size: params?.size ?? 10,
@@ -54,6 +73,14 @@ export const getUserByUsername = async (username: string): Promise<ApiResponse<U
  */
 export const getMyInfo = async (): Promise<ApiResponse<User>> => {
   const response = await axiosClient.get(`${BASE_URL}/myInfo`);
+  return response.data;
+};
+
+/**
+ * Update current logged-in user info (self profile update)
+ */
+export const updateMyInfo = async (data: ProfileUpdateRequest): Promise<ApiResponse<User>> => {
+  const response = await axiosClient.put(`${BASE_URL}/myInfo`, data);
   return response.data;
 };
 
