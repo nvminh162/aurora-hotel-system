@@ -217,9 +217,7 @@ export default function RoomTypeList() {
       cell: (roomType) => (
         <div className="flex items-center gap-2">
           <BedDouble className="h-4 w-4 text-muted-foreground" />
-          <span className="text-green-600">{roomType.availableRooms}</span>
-          <span className="text-muted-foreground">/</span>
-          <span>{roomType.totalRooms}</span>
+          <span className="font-medium">{roomType.totalRooms}</span>
         </div>
       ),
     },
