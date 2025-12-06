@@ -1,22 +1,25 @@
 package com.aurora.backend.service.impl;
 
-import com.aurora.backend.dto.request.LoginRequest;
-import com.aurora.backend.dto.request.RegisterRequest;
-import com.aurora.backend.dto.request.SessionMetaRequest;
+import com.aurora.backend.dto.request.*;
 import com.aurora.backend.dto.response.AuthResult;
 import com.aurora.backend.dto.response.AuthTokenResponse;
 import com.aurora.backend.dto.response.SessionMetaResponse;
 import com.aurora.backend.dto.response.UserDetailsResponse;
 import com.aurora.backend.dto.response.UserSessionResponse;
+import com.aurora.backend.entity.EmailVerificationToken;
+import com.aurora.backend.entity.PasswordResetToken;
 import com.aurora.backend.entity.Permission;
 import com.aurora.backend.entity.Role;
 import com.aurora.backend.entity.User;
 import com.aurora.backend.enums.ErrorCode;
 import com.aurora.backend.exception.AppException;
+import com.aurora.backend.repository.EmailVerificationTokenRepository;
+import com.aurora.backend.repository.PasswordResetTokenRepository;
 import com.aurora.backend.repository.RoleRepository;
 import com.aurora.backend.repository.UserRepository;
 import com.aurora.backend.service.AuthenticationService;
 import com.aurora.backend.service.RefreshTokenRedisService;
+import com.aurora.backend.service.StaffShiftService;
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jwt.JWTClaimsSet;
@@ -54,7 +57,10 @@ public class AuthenticationServiceImpl implements AuthenticationService {
     UserRepository userRepository;
     RoleRepository roleRepository;
     RefreshTokenRedisService refreshTokenRedisService;
+    StaffShiftService staffShiftService;
     PasswordEncoder passwordEncoder;
+    PasswordResetTokenRepository passwordResetTokenRepository;
+    EmailVerificationTokenRepository emailVerificationTokenRepository;
 
     @NonFinal
     @Value("${jwt.signerKey}")
@@ -122,6 +128,9 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             handleFailedLogin(user);
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
+
+        // Validate shift for STAFF role
+        validateStaffShift(user);
 
         handleSuccessfulLogin(user);
 
@@ -301,6 +310,31 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         log.info("Successful login for user: {}", user.getUsername());
     }
 
+    /**
+     * Validate if staff member has an active shift before allowing login
+     * Only STAFF role members are subject to shift validation
+     */
+    private void validateStaffShift(User user) {
+        // Check if user has STAFF role
+        boolean isStaff = user.getRoles().stream()
+            .anyMatch(role -> "STAFF".equalsIgnoreCase(role.getName()));
+        
+        if (!isStaff) {
+            // Not a staff member, no shift validation needed
+            return;
+        }
+        
+        // Check if staff has active shift now
+        boolean hasActiveShift = staffShiftService.hasActiveShiftNow(user.getId());
+        
+        if (!hasActiveShift) {
+            log.warn("Staff login denied - no active shift: {}", user.getUsername());
+            throw new AppException(ErrorCode.NO_ACTIVE_SHIFT);
+        }
+        
+        log.info("Staff shift validation passed for: {}", user.getUsername());
+    }
+
     private AuthResult buildAuthResult(User user, SessionMetaRequest sessionMetaRequest) {
         // Generate refresh token
         String refreshToken = buildJwt(REFRESH_TOKEN_EXPIRATION, user);
@@ -408,5 +442,143 @@ public class AuthenticationServiceImpl implements AuthenticationService {
                 .branchName(user.getAssignedBranch() != null ? user.getAssignedBranch().getName() : null)
                 .updatedAt(user.getUpdatedAt() != null ? user.getUpdatedAt().toString() : null)
                 .build();
+    }
+
+    
+    @Override
+    @Transactional
+    public void forgotPassword(ForgotPasswordRequest request) {
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        passwordResetTokenRepository.invalidateAllUserTokens(user);
+        
+        // Create new reset token
+        String token = UUID.randomUUID().toString();
+        PasswordResetToken resetToken = PasswordResetToken.builder()
+                .token(token)
+                .user(user)
+                .expiryDate(LocalDateTime.now().plusHours(24))
+                .used(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+        
+        passwordResetTokenRepository.save(resetToken);
+        
+        log.info("Password reset token generated for user: {}. Token: {}", user.getEmail(), token);
+    }
+    
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+        }
+        
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
+        
+        if (!resetToken.isValid()) {
+            throw new AppException(ErrorCode.TOKEN_EXPIRED);
+        }
+        
+        User user = resetToken.getUser();
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        user.setFailedLoginAttempts(0);
+        user.setLockedUntil(null);
+        user.setLockReason(null);
+        userRepository.save(user);
+        
+        // Mark token as used
+        resetToken.setUsed(true);
+        resetToken.setUsedAt(LocalDateTime.now());
+        passwordResetTokenRepository.save(resetToken);
+        
+        log.info("Password reset successful for user: {}", user.getEmail());
+    }
+    
+    @Override
+    @Transactional
+    public void changePassword(ChangePasswordRequest request) {
+        // Get current authenticated user
+        String username = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        // Validate current password
+        if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPassword())) {
+            throw new AppException(ErrorCode.WRONG_PASSWORD);
+        }
+        
+        // Validate new passwords match
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
+        }
+        
+        // Update password
+        user.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+        
+        log.info("Password changed successfully for user: {}", user.getUsername());
+    }
+    
+    @Override
+    @Transactional
+    public void sendVerificationEmail(String userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        if (user.getEmailVerified()) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_VERIFIED);
+        }
+        
+        emailVerificationTokenRepository.invalidateAllUserTokens(user);
+        
+        String token = UUID.randomUUID().toString();
+        EmailVerificationToken verificationToken = EmailVerificationToken.builder()
+                .token(token)
+                .user(user)
+                .expiryDate(LocalDateTime.now().plusHours(48))
+                .verified(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+        
+        emailVerificationTokenRepository.save(verificationToken);
+        
+        log.info("Verification email sent to: {}. Token: {}", user.getEmail(), token);
+    }
+    
+    @Override
+    @Transactional
+    public void verifyEmail(VerifyEmailRequest request) {
+        EmailVerificationToken verificationToken = emailVerificationTokenRepository.findByToken(request.getToken())
+                .orElseThrow(() -> new AppException(ErrorCode.INVALID_TOKEN));
+        
+        if (!verificationToken.isValid()) {
+            throw new AppException(ErrorCode.TOKEN_EXPIRED);
+        }
+        
+        User user = verificationToken.getUser();
+        user.setEmailVerified(true);
+        userRepository.save(user);
+        
+        verificationToken.setVerified(true);
+        verificationToken.setVerifiedAt(LocalDateTime.now());
+        emailVerificationTokenRepository.save(verificationToken);
+        
+        log.info("Email verified successfully for user: {}", user.getEmail());
+    }
+    
+    @Override
+    @Transactional
+    public void resendVerificationEmail(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        
+        if (user.getEmailVerified()) {
+            throw new AppException(ErrorCode.EMAIL_ALREADY_VERIFIED);
+        }
+        
+        sendVerificationEmail(user.getId());
     }
 }

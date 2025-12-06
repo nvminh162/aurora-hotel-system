@@ -27,6 +27,12 @@ public enum ErrorCode {
     ACCOUNT_LOCKED(1015, "Account is locked due to too many failed login attempts", HttpStatus.UNAUTHORIZED),
     WEAK_PASSWORD(1016, "Password must be at least 8 characters with uppercase, lowercase, digit and special character", HttpStatus.BAD_REQUEST),
     SESSION_NOT_FOUND(1017, "Session not found or already expired", HttpStatus.NOT_FOUND),
+    PASSWORD_NOT_MATCH(1018, "Passwords do not match", HttpStatus.BAD_REQUEST),
+    INVALID_TOKEN(1019, "Invalid or expired token", HttpStatus.BAD_REQUEST),
+    TOKEN_EXPIRED(1020, "Token has expired", HttpStatus.BAD_REQUEST),
+    WRONG_PASSWORD(1021, "Current password is incorrect", HttpStatus.BAD_REQUEST),
+    EMAIL_ALREADY_VERIFIED(1022, "Email has already been verified", HttpStatus.BAD_REQUEST),
+    EMAIL_NOT_VERIFIED(1023, "Email has not been verified", HttpStatus.FORBIDDEN),
     
     // Amenity errors
     AMENITY_EXISTED(1100, "Amenity already exists", HttpStatus.BAD_REQUEST),
@@ -86,6 +92,8 @@ public enum ErrorCode {
     ROLE_NOT_EXISTED(1700, "Role not found", HttpStatus.NOT_FOUND),
     ROLE_EXISTED(1701, "Role already exists", HttpStatus.BAD_REQUEST),
     ROLE_NAME_REQUIRED(1702, "Role name is required", HttpStatus.BAD_REQUEST),
+    ROLE_ALREADY_ASSIGNED(1703, "Role is already assigned to this user", HttpStatus.BAD_REQUEST),
+    ROLE_NOT_ASSIGNED(1704, "Role is not assigned to this user", HttpStatus.BAD_REQUEST),
     
     // Permission errors
     PERMISSION_NOT_EXISTED(1800, "Permission not found", HttpStatus.NOT_FOUND),
@@ -121,6 +129,7 @@ public enum ErrorCode {
     ROOM_TYPE_HOTEL_MISMATCH(2105, "Room type does not belong to the specified hotel", HttpStatus.BAD_REQUEST),
     HOTEL_NOT_FOUND(2106, "Hotel not found", HttpStatus.NOT_FOUND),
     ROOM_TYPE_NOT_FOUND(2107, "Room type not found", HttpStatus.NOT_FOUND),
+    ROOM_NOT_AVAILABLE(2108, "Room is not available for the selected dates", HttpStatus.BAD_REQUEST),
     
     // Service errors
     SERVICE_NOT_FOUND(2200, "Service not found", HttpStatus.NOT_FOUND),
@@ -149,20 +158,6 @@ public enum ErrorCode {
     BRANCH_DISTRICT_REQUIRED(2408, "District is required", HttpStatus.BAD_REQUEST),
     BRANCH_WARD_REQUIRED(2409, "Ward is required", HttpStatus.BAD_REQUEST),
     
-    // Review errors
-    REVIEW_NOT_FOUND(2500, "Review not found", HttpStatus.NOT_FOUND),
-    REVIEW_ALREADY_EXISTS(2501, "Review already exists for this booking", HttpStatus.BAD_REQUEST),
-    REVIEW_NOT_ALLOWED(2502, "Only checked-out customers can review", HttpStatus.FORBIDDEN),
-    REVIEW_EDIT_EXPIRED(2503, "Review can only be edited within 24 hours", HttpStatus.FORBIDDEN),
-    RATING_REQUIRED(2504, "Rating is required", HttpStatus.BAD_REQUEST),
-    RATING_INVALID(2505, "Rating must be between 1 and 5", HttpStatus.BAD_REQUEST),
-    COMMENT_REQUIRED(2506, "Comment is required", HttpStatus.BAD_REQUEST),
-    COMMENT_TOO_SHORT(2507, "Comment must be at least 10 characters", HttpStatus.BAD_REQUEST),
-    TOO_MANY_PHOTOS(2508, "Maximum 5 photos allowed", HttpStatus.BAD_REQUEST),
-    REVIEW_NOT_OWNER(2509, "You can only edit your own reviews", HttpStatus.FORBIDDEN),
-    REJECTION_REASON_REQUIRED(2510, "Rejection reason is required", HttpStatus.BAD_REQUEST),
-    REVIEW_ALREADY_MODERATED(2511, "Review has already been moderated", HttpStatus.BAD_REQUEST),
-    
     // VNPay payment errors
     BOOKING_NOT_CONFIRMED(2600, "Booking must be confirmed before payment", HttpStatus.BAD_REQUEST),
     PAYMENT_ALREADY_PROCESSED(2601, "Payment has already been processed", HttpStatus.BAD_REQUEST),
@@ -171,6 +166,36 @@ public enum ErrorCode {
     VNPAY_PAYMENT_FAILED(2604, "VNPay payment failed", HttpStatus.PAYMENT_REQUIRED),
     PAYMENT_EXPIRED(2605, "Payment session has expired", HttpStatus.BAD_REQUEST),
     VNPAY_TXN_REF_NOT_FOUND(2606, "VNPay transaction reference not found", HttpStatus.NOT_FOUND),
+    
+    // Dashboard errors
+    DASHBOARD_DATE_RANGE_INVALID(2700, "Date range cannot exceed 365 days", HttpStatus.BAD_REQUEST),
+    DASHBOARD_BRANCH_REQUIRED(2701, "Assigned branch is required for this dashboard", HttpStatus.BAD_REQUEST),
+    
+    // Work Shift errors
+    SHIFT_NOT_FOUND(2800, "Work shift not found", HttpStatus.NOT_FOUND),
+    SHIFT_NAME_EXISTED(2801, "Shift name already exists in this branch", HttpStatus.BAD_REQUEST),
+    SHIFT_TIME_OVERLAP(2802, "Shift time overlaps with existing shift", HttpStatus.BAD_REQUEST),
+    SHIFT_INVALID_TIME_RANGE(2803, "Start time must be before end time", HttpStatus.BAD_REQUEST),
+    SHIFT_INACTIVE(2804, "Cannot assign inactive shift", HttpStatus.BAD_REQUEST),
+    
+    // Shift Assignment errors
+    ASSIGNMENT_NOT_FOUND(2900, "Shift assignment not found", HttpStatus.NOT_FOUND),
+    ASSIGNMENT_ALREADY_EXISTS(2901, "Staff already assigned to this shift on this date", HttpStatus.BAD_REQUEST),
+    ASSIGNMENT_DATE_PAST(2902, "Cannot assign shifts for past dates", HttpStatus.BAD_REQUEST),
+    ASSIGNMENT_OVERLAP(2903, "Staff has overlapping shift on this date", HttpStatus.BAD_REQUEST),
+    ASSIGNMENT_COMPLETED(2904, "Cannot modify completed assignment", HttpStatus.BAD_REQUEST),
+    NO_ACTIVE_SHIFT(2905, "You don't have an active shift at this time. Please contact your manager.", HttpStatus.FORBIDDEN),
+    INVALID_DATE_RANGE(2906, "Start date must be before or equal to end date", HttpStatus.BAD_REQUEST),
+    
+    // Shift Check-in errors
+    CHECKIN_NOT_FOUND(3000, "Check-in record not found", HttpStatus.NOT_FOUND),
+    CHECKIN_WRONG_DATE(3001, "Can only check in for today's shift", HttpStatus.BAD_REQUEST),
+    CHECKIN_ALREADY_EXISTS(3002, "Already checked in. Please check out first.", HttpStatus.BAD_REQUEST),
+    ALREADY_CHECKED_IN(3002, "Already checked in. Please check out first.", HttpStatus.BAD_REQUEST), // Alias
+    CHECKIN_TOO_EARLY(3003, "Too early to check in", HttpStatus.BAD_REQUEST),
+    CHECKOUT_NOT_CHECKED_IN(3004, "No active check-in found. Please check in first.", HttpStatus.BAD_REQUEST),
+    NOT_CHECKED_IN(3004, "No active check-in found. Please check in first.", HttpStatus.BAD_REQUEST), // Alias
+    SHIFT_CANCELLED(3005, "Cannot check in to cancelled shift", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {

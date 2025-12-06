@@ -1,0 +1,4177 @@
+{
+	"info": {
+		"_postman_id": "142be643-84e0-4f8f-94a3-7ee28c831ec7",
+		"name": "Aurora Hotel Management System",
+		"description": "Comprehensive API Testing Collection for Aurora Hotel System\n\n## Test Flow\n\n1. **Authentication** - Login and get tokens\n    \n2. **User Management** - Register and manage users\n    \n3. **Branch Management** - Create and manage hotel branches\n    \n4. **Amenity Management** - Manage hotel amenities (WiFi, TV, etc.)\n    \n5. **Facility Management** - Manage branch facilities (Pool, Gym, Spa)\n    \n6. **Room Type Management** - Configure room types\n    \n7. **Room Management** - Manage individual rooms\n    \n8. **Service Management** - Hotel services (Laundry, Room service, etc.)\n    \n9. **Promotion Management** - Discounts and promotions\n    \n10. **Booking Management** - Room bookings\n    \n11. **Booking Room** - Booking-Room relationship\n    \n12. **Service Booking** - Service bookings for guests\n    \n13. **Payment Management** - Process payments\n    \n14. **Role & Permission** - Manage access control\n    \n15. **RAG (AI Chat)** - AI-powered chat using hotel knowledge base\n    \n16. **Document Management** - Upload, manage, and download documents\n    \n\n## Authentication\n\nAll endpoints (except register and login) require Bearer token authentication.\n\n## Default Users\n\n- **Admin**: username=`admin`, password=`Admin@123`\n    \n- **Manager**: username=`manager`, password=`Manager@123`\n    \n- **Staff**: username=`staff`, password=`Staff@123`\n    \n- **Customer**: username=`customer`, password=`Customer@123`\n    \n\n## New Features\n\n- **RAG AI Chat**: Intelligent responses using retrieval augmented generation\n    \n- **Document Management**: Full CRUD operations for document handling",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "48417652",
+		"_collection_link": "https://nguyenduykhai2-8509419.postman.co/workspace/NguyenDuyKhai's-Workspace~81749740-16ed-49e1-8f0c-0313169dea68/collection/48417652-142be643-84e0-4f8f-94a3-7ee28c831ec7?action=share&source=collection_link&creator=48417652"
+	},
+	"item": [
+		{
+			"name": "01. Authentication",
+			"item": [
+				{
+					"name": "Register New User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('userId', jsonData.result.id);",
+									"    pm.test('✅ User registered successfully', function() {",
+									"        pm.expect(jsonData.code).to.eql(200);",
+									"        pm.expect(jsonData.result.username).to.not.be.empty;",
+									"    });",
+									"    console.log('User ID:', jsonData.result.id);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"testuser_{{$timestamp}}\",\n    \"password\": \"TestUser@123\",\n    \"firstName\": \"Test\",\n    \"lastName\": \"User\",\n    \"dob\": \"1990-01-01\",\n    \"phone\": \"0901234567\",\n    \"email\": \"testuser{{$timestamp}}@example.com\",\n    \"address\": \"123 Test Street, District 1\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"register"
+							]
+						},
+						"description": "Register a new user account (no authentication required)"
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', jsonData.result.accessToken);",
+									"    pm.test('✅ Login successful', function() {",
+									"        pm.expect(jsonData.code).to.eql(200);",
+									"        pm.expect(jsonData.result.accessToken).to.not.be.empty;",
+									"        pm.expect(jsonData.result.user).to.not.be.empty;",
+									"    });",
+									"    console.log('Access Token:', jsonData.result.accessToken);",
+									"    console.log('User:', jsonData.result.user.username);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"admin\",\n    \"password\": \"password123\",\n    \"sessionMeta\": {\n        \"deviceName\": \"Postman\",\n        \"deviceType\": \"Desktop\",\n        \"userAgent\": \"PostmanRuntime/7.32.0\"\n    }\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"login"
+							]
+						},
+						"description": "Login with credentials and session metadata. Returns access token in response body and sets refresh token as HttpOnly cookie."
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Current user retrieved', function() {",
+									"        pm.expect(jsonData.result.username).to.not.be.empty;",
+									"        pm.expect(jsonData.result.roles).to.be.an('array');",
+									"        pm.expect(jsonData.result.permissions).to.be.an('array');",
+									"    });",
+									"    console.log('Current User:', jsonData.result.username);",
+									"    console.log('Roles:', jsonData.result.roles);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"me"
+							]
+						},
+						"description": "Get current authenticated user session information"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Current User Details",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ User details retrieved', function() {",
+									"        pm.expect(jsonData.result.id).to.not.be.empty;",
+									"        pm.expect(jsonData.result.username).to.not.be.empty;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/me/details",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"me",
+								"details"
+							]
+						},
+						"description": "Get current authenticated user detailed information"
+					},
+					"response": []
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('accessToken', jsonData.result.accessToken);",
+									"    pm.test('✅ Token refreshed successfully', function() {",
+									"        pm.expect(jsonData.result.accessToken).to.not.be.empty;",
+									"    });",
+									"    console.log('New Access Token:', jsonData.result.accessToken);",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"deviceName\": \"Postman\",\n    \"deviceType\": \"Desktop\",\n    \"userAgent\": \"PostmanRuntime/7.32.0\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/refresh-token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"refresh-token"
+							]
+						},
+						"description": "Refresh access token using refresh token from cookie. Requires refresh_token cookie to be sent automatically."
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Sessions",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Sessions retrieved', function() {",
+									"        pm.expect(jsonData.result).to.be.an('array');",
+									"    });",
+									"    console.log('Total Sessions:', jsonData.result.length);",
+									"    if (jsonData.result.length > 0) {",
+									"        pm.collectionVariables.set('sessionId', jsonData.result[0].sessionId);",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/sessions",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"sessions"
+							]
+						},
+						"description": "Get all active sessions for the current user. Requires refresh_token cookie."
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Session",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Session removed successfully', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/sessions/{{sessionId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"sessions",
+								"{{sessionId}}"
+							]
+						},
+						"description": "Remove a specific session by session ID. User can only remove their own sessions."
+					},
+					"response": []
+				},
+				{
+					"name": "Logout",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Logout successful', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"    pm.collectionVariables.set('accessToken', '');",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"logout"
+							]
+						},
+						"description": "Logout and clear refresh token cookie. Invalidates the current session."
+					},
+					"response": []
+				},
+				{
+					"name": "Forgot Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Password reset email sent', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"admin@aurora.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/forgot-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"forgot-password"
+							]
+						},
+						"description": "Request password reset email with reset token"
+					},
+					"response": []
+				},
+				{
+					"name": "Reset Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Password reset successful', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"RESET_TOKEN_FROM_EMAIL\",\n    \"newPassword\": \"NewPassword@123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/reset-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"reset-password"
+							]
+						},
+						"description": "Reset password using token from email"
+					},
+					"response": []
+				},
+				{
+					"name": "Change Password",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Password changed successfully', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"oldPassword\": \"password123\",\n    \"newPassword\": \"NewPassword@123\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/change-password",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"change-password"
+							]
+						},
+						"description": "Change password for authenticated user (requires old password)"
+					},
+					"response": []
+				},
+				{
+					"name": "Send Verification Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Verification email sent', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/send-verification-email",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"send-verification-email"
+							]
+						},
+						"description": "Send email verification link to user's email"
+					},
+					"response": []
+				},
+				{
+					"name": "Verify Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Email verified successfully', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"token\": \"VERIFICATION_TOKEN_FROM_EMAIL\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/verify-email",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"verify-email"
+							]
+						},
+						"description": "Verify email using token from email link"
+					},
+					"response": []
+				},
+				{
+					"name": "Resend Verification Email",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Verification email resent', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"user@example.com\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/resend-verification-email",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"resend-verification-email"
+							]
+						},
+						"description": "Resend email verification link"
+					},
+					"response": []
+				}
+			],
+			"description": "Authentication endpoints with Redis session management - Register, Login, Logout, Token refresh, Session management, Password reset, and Email verification"
+		},
+		{
+			"name": "02. User Management",
+			"item": [
+				{
+					"name": "Create User (Admin)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ User created by admin', function() {",
+									"        pm.expect(jsonData.result.id).to.not.be.empty;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"username\": \"staff_{{$timestamp}}\",\n    \"password\": \"Staff@123\",\n    \"email\": \"staff{{$timestamp}}@aurora.com\",\n    \"fullName\": \"Staff Member\",\n    \"phone\": \"0907654321\",\n    \"roleIds\": [\"STAFF_ROLE_ID\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Admin creates a new user with specific roles"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved user list', function() {",
+									"        pm.expect(jsonData.result).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users"
+							]
+						},
+						"description": "Get list of all users"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Users Paginated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved paginated users', function() {",
+									"        pm.expect(jsonData.result.content).to.be.an('array');",
+									"        pm.expect(jsonData.result.totalElements).to.be.a('number');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/paginated?page=0&size=10&sortBy=createdAt&sortDirection=DESC",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"paginated"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sortBy",
+									"value": "createdAt"
+								},
+								{
+									"key": "sortDirection",
+									"value": "DESC"
+								}
+							]
+						},
+						"description": "Get paginated list of users"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved user details', function() {",
+									"        pm.expect(jsonData.result.id).to.not.be.empty;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}"
+							]
+						},
+						"description": "Get specific user by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get User by Username",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved user by username', function() {",
+									"        pm.expect(jsonData.result.username).to.eql('admin');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/username/admin",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"username",
+								"admin"
+							]
+						},
+						"description": "Get user by username"
+					},
+					"response": []
+				},
+				{
+					"name": "Update User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ User updated successfully', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"fullName\": \"Updated User Name\",\n    \"email\": \"updated.email@example.com\",\n    \"phone\": \"0908888888\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/users/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}"
+							]
+						},
+						"description": "Update user information"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Users",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ User search completed', function() {",
+									"        pm.expect(jsonData.result.content).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/search?username=admin&page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"search"
+							],
+							"query": [
+								{
+									"key": "username",
+									"value": "admin"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Search users by username"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete User",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ User deleted successfully', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/users/{{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"users",
+								"{{userId}}"
+							]
+						},
+						"description": "Delete a user (soft delete)"
+					},
+					"response": []
+				}
+			],
+			"description": "User management endpoints for registration, CRUD operations, and search"
+		},
+		{
+			"name": "03. Branch Management",
+			"item": [
+				{
+					"name": "Create Branch",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('branchId', jsonData.result.id);",
+									"    pm.test('✅ Branch created successfully', function() {",
+									"        pm.expect(jsonData.result.code).to.not.be.empty;",
+									"    });",
+									"    console.log('Branch ID:', jsonData.result.id);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"code\": \"AURORA_HCM_{{$timestamp}}\",\n    \"name\": \"Aurora Hotel Ho Chi Minh\",\n    \"address\": \"123 Nguyen Hue, District 1\",\n    \"ward\": \"Ben Nghe\",\n    \"district\": \"District 1\",\n    \"city\": \"Ho Chi Minh\",\n    \"phone\": \"02812345678\",\n    \"email\": \"hcm@aurorahotel.com\",\n    \"description\": \"Luxury 5-star hotel in the heart of Saigon\",\n    \"status\": \"ACTIVE\",\n    \"images\": [\"https://example.com/branch-1.jpg\", \"https://example.com/branch-2.jpg\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/branches",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branches"
+							]
+						},
+						"description": "Create a new hotel branch"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Branches",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved branches', function() {",
+									"        pm.expect(jsonData.result.content).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/branches?page=0&size=10&sortBy=name",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branches"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sortBy",
+									"value": "name"
+								}
+							]
+						},
+						"description": "Get paginated list of branches"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Branch by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved branch details', function() {",
+									"        pm.expect(jsonData.result.id).to.not.be.empty;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/branches/{{branchId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branches",
+								"{{branchId}}"
+							]
+						},
+						"description": "Get specific branch by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Branch by Code",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Retrieved branch by code', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/branches/code/AURORA_HCM",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branches",
+								"code",
+								"AURORA_HCM"
+							]
+						},
+						"description": "Get branch by unique code"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Branch",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Branch updated successfully', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Aurora Grand Hotel Ho Chi Minh\",\n    \"description\": \"Updated: Luxury 5-star hotel with ocean view\",\n    \"images\": [\"https://example.com/branch-updated-1.jpg\", \"https://example.com/branch-updated-2.jpg\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/branches/{{branchId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branches",
+								"{{branchId}}"
+							]
+						},
+						"description": "Update branch information"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Branches",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Branch search completed', function() {",
+									"        pm.expect(jsonData.result.content).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/branches/search?keyword=Aurora&page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branches",
+								"search"
+							],
+							"query": [
+								{
+									"key": "keyword",
+									"value": "Aurora"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Search branches by keyword"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Branches by City",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Retrieved branches by city', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/branches/city/Ho Chi Minh?page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branches",
+								"city",
+								"Ho Chi Minh"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get branches in a specific city"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Branches by Status",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Retrieved branches by status', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/branches/status/ACTIVE?page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branches",
+								"status",
+								"ACTIVE"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get branches by status (ACTIVE, INACTIVE, UNDER_MAINTENANCE)"
+					},
+					"response": []
+				},
+				{
+					"name": "Assign Manager to Branch",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Manager assigned to branch', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/branches/{{branchId}}/manager?managerId={{userId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branches",
+								"{{branchId}}",
+								"manager"
+							],
+							"query": [
+								{
+									"key": "managerId",
+									"value": "{{userId}}"
+								}
+							]
+						},
+						"description": "Assign a manager to a branch"
+					},
+					"response": []
+				},
+				{
+					"name": "Remove Manager from Branch",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Manager removed from branch', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/branches/{{branchId}}/manager",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branches",
+								"{{branchId}}",
+								"manager"
+							]
+						},
+						"description": "Remove manager from a branch"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Branch Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved branch statistics', function() {",
+									"        pm.expect(jsonData.result).to.be.an('object');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/branches/{{branchId}}/statistics",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branches",
+								"{{branchId}}",
+								"statistics"
+							]
+						},
+						"description": "Get statistics for a specific branch"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Branch",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Branch deleted successfully', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/branches/{{branchId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"branches",
+								"{{branchId}}"
+							]
+						},
+						"description": "Delete a branch (soft delete)"
+					},
+					"response": []
+				}
+			],
+			"description": "Branch management endpoints for hotel locations"
+		},
+		{
+			"name": "04. Amenity Management",
+			"item": [
+				{
+					"name": "Create Amenity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('amenityId', jsonData.result.id);",
+									"    pm.test('✅ Amenity created successfully', function() {",
+									"        pm.expect(jsonData.result.name).to.not.be.empty;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"High-Speed WiFi\",\n    \"description\": \"Free high-speed wireless internet\",\n    \"type\": \"TECHNOLOGY\",\n    \"isPaid\": false\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/amenities",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"amenities"
+							]
+						},
+						"description": "Create a new amenity"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Amenities",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved amenities', function() {",
+									"        pm.expect(jsonData.result).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/amenities",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"amenities"
+							]
+						},
+						"description": "Get all amenities"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Amenities Paginated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved paginated amenities', function() {",
+									"        pm.expect(jsonData.result.content).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/amenities/paginated?page=0&size=10&sortBy=name&sortDirection=ASC",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"amenities",
+								"paginated"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sortBy",
+									"value": "name"
+								},
+								{
+									"key": "sortDirection",
+									"value": "ASC"
+								}
+							]
+						},
+						"description": "Get paginated list of amenities"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Amenity by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Retrieved amenity details', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/amenities/{{amenityId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"amenities",
+								"{{amenityId}}"
+							]
+						},
+						"description": "Get specific amenity by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Amenity by Name",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Retrieved amenity by name', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/amenities/name/WiFi",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"amenities",
+								"name",
+								"WiFi"
+							]
+						},
+						"description": "Get amenity by name"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Amenity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Amenity updated successfully', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Ultra High-Speed WiFi\",\n    \"description\": \"Fiber optic high-speed wireless internet - 1Gbps\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/amenities/{{amenityId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"amenities",
+								"{{amenityId}}"
+							]
+						},
+						"description": "Update amenity information"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Amenities",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Amenity search completed', function() {",
+									"        pm.expect(jsonData.result.content).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/amenities/search?name=WiFi&page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"amenities",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "WiFi"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Search amenities by name"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Amenities by Type",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Retrieved amenities by type', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/amenities/type/TECHNOLOGY?page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"amenities",
+								"type",
+								"TECHNOLOGY"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Get amenities by type (TECHNOLOGY, BATHROOM, BEDROOM, ENTERTAINMENT, KITCHEN, OTHER)"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Amenity",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Amenity deleted successfully', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/amenities/{{amenityId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"amenities",
+								"{{amenityId}}"
+							]
+						},
+						"description": "Delete an amenity"
+					},
+					"response": []
+				}
+			],
+			"description": "Amenity management for room features (WiFi, TV, Air conditioning, etc.)"
+		},
+		{
+			"name": "05. Facility Management",
+			"item": [
+				{
+					"name": "Create Facility",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.collectionVariables.set('facilityId', jsonData.result.id);",
+									"    pm.test('✅ Facility created successfully', function() {",
+									"        pm.expect(jsonData.result.name).to.not.be.empty;",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Infinity Pool\",\n    \"branchId\": \"{{branchId}}\",\n    \"openingHours\": \"06:00 - 22:00\",\n    \"policies\": \"No diving. Children under 12 must be accompanied by adults.\",\n    \"images\": [\"https://example.com/facility-pool-1.jpg\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/facilities",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"facilities"
+							]
+						},
+						"description": "Create a new facility for a branch"
+					},
+					"response": []
+				},
+				{
+					"name": "Get All Facilities",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved facilities', function() {",
+									"        pm.expect(jsonData.result).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/facilities",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"facilities"
+							]
+						},
+						"description": "Get all facilities"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Facilities Paginated",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved paginated facilities', function() {",
+									"        pm.expect(jsonData.result.content).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/facilities/paginated?page=0&size=10&sortBy=name&sortDirection=ASC",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"facilities",
+								"paginated"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sortBy",
+									"value": "name"
+								},
+								{
+									"key": "sortDirection",
+									"value": "ASC"
+								}
+							]
+						},
+						"description": "Get paginated list of facilities"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Facility by ID",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Retrieved facility details', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/facilities/{{facilityId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"facilities",
+								"{{facilityId}}"
+							]
+						},
+						"description": "Get specific facility by ID"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Facilities by Branch",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved facilities by branch', function() {",
+									"        pm.expect(jsonData.result).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/facilities/hotel/{{branchId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"facilities",
+								"hotel",
+								"{{branchId}}"
+							]
+						},
+						"description": "Get all facilities for a specific branch"
+					},
+					"response": []
+				},
+				{
+					"name": "Get Facilities by Branch (Paginated)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Retrieved paginated facilities by branch', function() {",
+									"        pm.expect(jsonData.result.content).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/facilities/hotel/{{branchId}}/paginated?page=0&size=10&sortBy=name&sortDirection=ASC",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"facilities",
+								"hotel",
+								"{{branchId}}",
+								"paginated"
+							],
+							"query": [
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								},
+								{
+									"key": "sortBy",
+									"value": "name"
+								},
+								{
+									"key": "sortDirection",
+									"value": "ASC"
+								}
+							]
+						},
+						"description": "Get paginated facilities for a branch"
+					},
+					"response": []
+				},
+				{
+					"name": "Update Facility",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Facility updated successfully', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"name\": \"Infinity Pool & Jacuzzi\",\n    \"openingHours\": \"06:00 - 23:00\",\n    \"policies\": \"No diving. Children under 12 must be accompanied by adults. Jacuzzi closes at 21:00.\",\n    \"images\": [\"https://example.com/facility-pool-updated-1.jpg\"]\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/facilities/{{facilityId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"facilities",
+								"{{facilityId}}"
+							]
+						},
+						"description": "Update facility information"
+					},
+					"response": []
+				},
+				{
+					"name": "Search Facilities",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    var jsonData = pm.response.json();",
+									"    pm.test('✅ Facility search completed', function() {",
+									"        pm.expect(jsonData.result.content).to.be.an('array');",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/facilities/search?name=Pool&page=0&size=10",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"facilities",
+								"search"
+							],
+							"query": [
+								{
+									"key": "name",
+									"value": "Pool"
+								},
+								{
+									"key": "page",
+									"value": "0"
+								},
+								{
+									"key": "size",
+									"value": "10"
+								}
+							]
+						},
+						"description": "Search facilities by name"
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Facility",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.test('✅ Facility deleted successfully', function() {",
+									"        pm.response.to.have.status(200);",
+									"    });",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/facilities/{{facilityId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"facilities",
+								"{{facilityId}}"
+							]
+						},
+						"description": "Delete a facility"
+					},
+					"response": []
+				}
+			],
+			"description": "Facility management for branch amenities (Pool, Gym, Spa, Restaurant, etc.)"
+		},
+		{
+			"name": "10. Booking Management",
+			"item": [
+				{
+					"name": "Booking Workflow",
+					"item": [
+						{
+							"name": "Confirm Booking",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Booking confirmed successfully', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result.status).to.eql('CONFIRMED');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"staffNotes\": \"Room inspected and ready for guest\",\n    \"estimatedArrival\": \"2024-12-25T14:00:00\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/bookings/{{bookingId}}/confirm",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"bookings",
+										"{{bookingId}}",
+										"confirm"
+									]
+								},
+								"description": "Staff confirms pending booking - validates availability and moves status to CONFIRMED"
+							},
+							"response": []
+						},
+						{
+							"name": "Modify Booking",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Booking modified successfully', function() {",
+											"        pm.response.to.have.status(200);",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"checkinDate\": \"2024-12-25\",\n    \"checkoutDate\": \"2024-12-28\",\n    \"numberOfGuests\": 3,\n    \"customerNotes\": \"Extended stay by 1 day\",\n    \"roomIds\": [\"{{roomId}}\"]\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/bookings/{{bookingId}}/modify",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"bookings",
+										"{{bookingId}}",
+										"modify"
+									]
+								},
+								"description": "Customer modifies their booking - changes dates, guests, or rooms"
+							},
+							"response": []
+						},
+						{
+							"name": "Cancel Booking",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Booking cancelled with refund info', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result).to.have.property('refundAmount');",
+											"        pm.expect(jsonData.result).to.have.property('refundPercentage');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"cancellationReason\": \"Change of travel plans\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/bookings/{{bookingId}}/cancel",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"bookings",
+										"{{bookingId}}",
+										"cancel"
+									]
+								},
+								"description": "Cancel booking with automatic refund calculation based on cancellation policy"
+							},
+							"response": []
+						},
+						{
+							"name": "Check-in Guest",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Guest checked in successfully', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result.status).to.eql('CHECKED_IN');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/bookings/{{bookingId}}/check-in",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"bookings",
+										"{{bookingId}}",
+										"check-in"
+									]
+								},
+								"description": "Check-in guest for confirmed booking - changes status to CHECKED_IN"
+							},
+							"response": []
+						},
+						{
+							"name": "Check-out Guest",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Guest checked out successfully', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result.status).to.eql('CHECKED_OUT');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/bookings/{{bookingId}}/check-out",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"bookings",
+										"{{bookingId}}",
+										"check-out"
+									]
+								},
+								"description": "Check-out guest from room - finalizes stay"
+							},
+							"response": []
+						},
+						{
+							"name": "Mark No-Show",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Booking marked as no-show', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result.status).to.eql('NO_SHOW');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/bookings/{{bookingId}}/no-show",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"bookings",
+										"{{bookingId}}",
+										"no-show"
+									]
+								},
+								"description": "Mark booking as no-show when guest doesn't arrive - may apply penalty fees"
+							},
+							"response": []
+						}
+					],
+					"description": "Booking lifecycle management - confirmation, modification, cancellation, check-in, check-out, no-show handling"
+				},
+				{
+					"name": "Room Availability",
+					"item": [
+						{
+							"name": "Check Room Availability",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Room availability checked', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result).to.have.property('isAvailable');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/room-availability/check/{{roomId}}?checkinDate=2024-12-25&checkoutDate=2024-12-28",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"room-availability",
+										"check",
+										"{{roomId}}"
+									],
+									"query": [
+										{
+											"key": "checkinDate",
+											"value": "2024-12-25",
+											"description": "Check-in date (YYYY-MM-DD)"
+										},
+										{
+											"key": "checkoutDate",
+											"value": "2024-12-28",
+											"description": "Check-out date (YYYY-MM-DD)"
+										}
+									]
+								},
+								"description": "Check if a specific room is available for given date range (PUBLIC)"
+							},
+							"response": []
+						},
+						{
+							"name": "Check Multiple Rooms",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Multiple rooms availability checked', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result).to.be.an('array');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n    \"roomIds\": [\"{{roomId}}\", \"room-id-2\", \"room-id-3\"],\n    \"checkinDate\": \"2024-12-25\",\n    \"checkoutDate\": \"2024-12-28\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/room-availability/check-multiple",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"room-availability",
+										"check-multiple"
+									]
+								},
+								"description": "Check availability for multiple rooms at once (PUBLIC)"
+							},
+							"response": []
+						},
+						{
+							"name": "Find Available Rooms",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Available rooms found', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result).to.be.an('array');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/room-availability/find-available?roomTypeId={{roomTypeId}}&checkinDate=2024-12-25&checkoutDate=2024-12-28",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"room-availability",
+										"find-available"
+									],
+									"query": [
+										{
+											"key": "roomTypeId",
+											"value": "{{roomTypeId}}",
+											"description": "Optional: Filter by room type"
+										},
+										{
+											"key": "checkinDate",
+											"value": "2024-12-25",
+											"description": "Check-in date (YYYY-MM-DD)"
+										},
+										{
+											"key": "checkoutDate",
+											"value": "2024-12-28",
+											"description": "Check-out date (YYYY-MM-DD)"
+										},
+										{
+											"key": "branchId",
+											"value": "{{branchId}}",
+											"description": "Optional: Filter by branch",
+											"disabled": true
+										}
+									]
+								},
+								"description": "Find all available rooms matching criteria (PUBLIC)"
+							},
+							"response": []
+						},
+						{
+							"name": "Get Availability Calendar",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Calendar data retrieved', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result).to.be.an('array');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/room-availability/calendar/{{roomId}}?startDate=2024-12-01&endDate=2024-12-31",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"room-availability",
+										"calendar",
+										"{{roomId}}"
+									],
+									"query": [
+										{
+											"key": "startDate",
+											"value": "2024-12-01",
+											"description": "Start date (YYYY-MM-DD)"
+										},
+										{
+											"key": "endDate",
+											"value": "2024-12-31",
+											"description": "End date (YYYY-MM-DD)"
+										}
+									]
+								},
+								"description": "Get room availability calendar for date range (PUBLIC)"
+							},
+							"response": []
+						},
+						{
+							"name": "Count Available Rooms",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Available room count retrieved', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result).to.be.a('number');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/room-availability/count-available?checkinDate=2024-12-25&checkoutDate=2024-12-28",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"room-availability",
+										"count-available"
+									],
+									"query": [
+										{
+											"key": "checkinDate",
+											"value": "2024-12-25",
+											"description": "Check-in date (YYYY-MM-DD)"
+										},
+										{
+											"key": "checkoutDate",
+											"value": "2024-12-28",
+											"description": "Check-out date (YYYY-MM-DD)"
+										},
+										{
+											"key": "roomTypeId",
+											"value": "{{roomTypeId}}",
+											"description": "Optional: Filter by room type",
+											"disabled": true
+										},
+										{
+											"key": "branchId",
+											"value": "{{branchId}}",
+											"description": "Optional: Filter by branch",
+											"disabled": true
+										}
+									]
+								},
+								"description": "Count total available rooms for criteria (PUBLIC)"
+							},
+							"response": []
+						},
+						{
+							"name": "Detect Booking Conflicts",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Conflicts detected', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result).to.be.an('array');",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/room-availability/conflicts/{{roomId}}?checkinDate=2024-12-25&checkoutDate=2024-12-28",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"room-availability",
+										"conflicts",
+										"{{roomId}}"
+									],
+									"query": [
+										{
+											"key": "checkinDate",
+											"value": "2024-12-25",
+											"description": "Check-in date (YYYY-MM-DD)"
+										},
+										{
+											"key": "checkoutDate",
+											"value": "2024-12-28",
+											"description": "Check-out date (YYYY-MM-DD)"
+										},
+										{
+											"key": "excludeBookingId",
+											"value": "",
+											"description": "Optional: Exclude specific booking from conflict check",
+											"disabled": true
+										}
+									]
+								},
+								"description": "Detect booking conflicts for room in date range (Staff/Manager)"
+							},
+							"response": []
+						},
+						{
+							"name": "Lock Room Temporarily",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Room locked successfully', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result).to.have.property('lockToken');",
+											"        pm.collectionVariables.set('lockToken', jsonData.result.lockToken);",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/room-availability/lock?roomId={{roomId}}&checkinDate=2024-12-25&checkoutDate=2024-12-28&userId={{userId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"room-availability",
+										"lock"
+									],
+									"query": [
+										{
+											"key": "roomId",
+											"value": "{{roomId}}",
+											"description": "Room to lock"
+										},
+										{
+											"key": "checkinDate",
+											"value": "2024-12-25",
+											"description": "Check-in date (YYYY-MM-DD)"
+										},
+										{
+											"key": "checkoutDate",
+											"value": "2024-12-28",
+											"description": "Check-out date (YYYY-MM-DD)"
+										},
+										{
+											"key": "userId",
+											"value": "{{userId}}",
+											"description": "User creating the lock"
+										}
+									]
+								},
+								"description": "Temporarily lock room during booking process (15 min expiry) - prevents double booking"
+							},
+							"response": []
+						},
+						{
+							"name": "Unlock Room",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"if (pm.response.code === 200) {",
+											"    pm.test('✅ Room unlocked successfully', function() {",
+											"        pm.response.to.have.status(200);",
+											"        const jsonData = pm.response.json();",
+											"        pm.expect(jsonData.result).to.be.true;",
+											"    });",
+											"}"
+										],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"method": "POST",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/v1/room-availability/unlock?lockToken={{lockToken}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"room-availability",
+										"unlock"
+									],
+									"query": [
+										{
+											"key": "lockToken",
+											"value": "{{lockToken}}",
+											"description": "Lock token from lock operation"
+										}
+									]
+								},
+								"description": "Release temporary room lock using lock token"
+							},
+							"response": []
+						}
+					],
+					"description": "Room availability checking, calendar, locking mechanism for booking flow - includes public endpoints for availability search"
+				}
+			],
+			"description": "Complete booking workflow management - confirmation, modification, cancellation, check-in/out, no-show handling, and room availability system with temporary locking"
+		},
+		{
+			"name": "07. RAG (AI Chat) Management",
+			"item": [
+				{
+					"name": "Chat Sync",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/rag/sync?message=dịch vụ của khách sạn aurora&chatId=1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rag",
+								"sync"
+							],
+							"query": [
+								{
+									"key": "message",
+									"value": "dịch vụ của khách sạn aurora",
+									"description": "The message/question to ask the AI system"
+								},
+								{
+									"key": "chatId",
+									"value": "1",
+									"description": "Optional chat session ID for conversation continuity"
+								}
+							]
+						},
+						"description": "Synchronous chat with AI using RAG (Retrieval Augmented Generation). Returns complete response at once."
+					},
+					"response": []
+				},
+				{
+					"name": "Chat Stream",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "text/event-stream"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/rag/stream?message=dịch vụ của khách sạn aurora&chatId=1",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rag",
+								"stream"
+							],
+							"query": [
+								{
+									"key": "message",
+									"value": "dịch vụ của khách sạn aurora",
+									"description": "The message/question to ask the AI system (default: 'dịch vụ của khách sạn aurora')"
+								},
+								{
+									"key": "chatId",
+									"value": "1",
+									"description": "Optional chat session ID for conversation continuity (default: '1')"
+								}
+							]
+						},
+						"description": "Streaming chat with AI using RAG. Returns response as Server-Sent Events (SSE) for real-time streaming."
+					},
+					"response": []
+				},
+				{
+					"name": "Test Content Retriever",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/rag/retriever?message=aurora có ưu đãi gì?",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"rag",
+								"retriever"
+							],
+							"query": [
+								{
+									"key": "message",
+									"value": "aurora có ưu đãi gì?",
+									"description": "Query to test content retrieval (default: 'aurora có ưu đãi gì?')"
+								}
+							]
+						},
+						"description": "Test the content retriever component. Returns raw retrieved content without AI processing."
+					},
+					"response": []
+				}
+			],
+			"description": "RAG (Retrieval Augmented Generation) AI Chat System - Provides intelligent responses using hotel knowledge base"
+		},
+		{
+			"name": "08. Document Management",
+			"item": [
+				{
+					"name": "Upload Document",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"description": "The document file to upload",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/document/upload",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"document",
+								"upload"
+							]
+						},
+						"description": "Upload a new document file. Returns document metadata including ID, filename, file type, and upload timestamp."
+					},
+					"response": []
+				},
+				{
+					"name": "List All Documents",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/document",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"document"
+							]
+						},
+						"description": "Get list of all uploaded documents with their metadata (ID, filename, file type, size, upload date)."
+					},
+					"response": []
+				},
+				{
+					"name": "Download Document",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/document/{{documentId}}/download",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"document",
+								"{{documentId}}",
+								"download"
+							]
+						},
+						"description": "Download a specific document by ID. Returns the file with appropriate content type and filename headers."
+					},
+					"response": []
+				},
+				{
+					"name": "Update Document",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{
+									"key": "file",
+									"description": "The new document file to replace the existing one",
+									"type": "file",
+									"src": []
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/document/{{documentId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"document",
+								"{{documentId}}"
+							]
+						},
+						"description": "Update an existing document by replacing it with a new file. Returns updated document metadata."
+					},
+					"response": []
+				},
+				{
+					"name": "Delete Document",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/document/{{documentId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"document",
+								"{{documentId}}"
+							]
+						},
+						"description": "Delete a document by ID. This permanently removes the document and its metadata."
+					},
+					"response": []
+				}
+			],
+			"description": "Document Management System - Upload, download, update, and delete documents for the hotel system"
+		},
+		{
+			"name": "11. Dashboard & Statistics",
+			"item": [
+				{
+					"name": "Get Admin Dashboard Overview",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response structure is correct\", function() {\r",
+									"    const response = pm.response.json();\r",
+									"    \r",
+									"    pm.expect(response).to.have.property('code');\r",
+									"    pm.expect(response).to.have.property('result');\r",
+									"    pm.expect(response.code).to.equal(1000);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Dashboard data exists\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    // Check all required properties\r",
+									"    pm.expect(data).to.have.property('totalRevenue');\r",
+									"    pm.expect(data).to.have.property('totalBookings');\r",
+									"    pm.expect(data).to.have.property('occupancyRate');\r",
+									"    pm.expect(data).to.have.property('avgBookingValue');\r",
+									"    pm.expect(data).to.have.property('newCustomers');\r",
+									"    pm.expect(data).to.have.property('returningCustomers');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Data types are correct\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    pm.expect(data.totalRevenue).to.be.a('number');\r",
+									"    pm.expect(data.totalBookings).to.be.a('number');\r",
+									"    pm.expect(data.occupancyRate).to.be.a('number');\r",
+									"    pm.expect(data.avgBookingValue).to.be.a('number');\r",
+									"    pm.expect(data.newCustomers).to.be.a('number');\r",
+									"    pm.expect(data.returningCustomers).to.be.a('number');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Occupancy rate is valid percentage\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    pm.expect(data.occupancyRate).to.be.within(0, 100);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Numbers are non-negative\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    pm.expect(data.totalRevenue).to.be.at.least(0);\r",
+									"    pm.expect(data.totalBookings).to.be.at.least(0);\r",
+									"    pm.expect(data.newCustomers).to.be.at.least(0);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard/admin/overview?dateFrom=2025-01-01&dateTo=2025-12-31",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dashboard",
+								"admin",
+								"overview"
+							],
+							"query": [
+								{
+									"key": "dateFrom",
+									"value": "2025-01-01"
+								},
+								{
+									"key": "dateTo",
+									"value": "2025-12-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Manager Branch Overview",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Branch overview data exists\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    pm.expect(data).to.have.property('totalRevenue');\r",
+									"    pm.expect(data).to.have.property('totalBookings');\r",
+									"    pm.expect(data).to.have.property('occupancyRate');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response is for correct branch\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    const requestedBranchId = pm.collectionVariables.get(\"branchId\");\r",
+									"    \r",
+									"    // If branchId is returned in response\r",
+									"    if (data.branchId) {\r",
+									"        pm.expect(data.branchId).to.equal(requestedBranchId);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Manager sees limited data\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    // Manager should see branch-specific data\r",
+									"    pm.expect(data.totalRevenue).to.be.a('number');\r",
+									"    pm.expect(data.totalBookings).to.be.a('number');\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard/manager/branch/{{branchId}}?dateFrom=2025-01-01&dateTo=2025-12-31",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dashboard",
+								"manager",
+								"branch",
+								"{{branchId}}"
+							],
+							"query": [
+								{
+									"key": "dateFrom",
+									"value": "2025-01-01"
+								},
+								{
+									"key": "dateTo",
+									"value": "2025-12-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Staff Dashboard",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Staff dashboard data exists\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    pm.expect(data).to.be.an('object');\r",
+									"    pm.expect(data).to.have.property('totalBookings');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Staff has limited data access\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    // Staff should see their assigned bookings\r",
+									"    pm.expect(data.totalBookings).to.be.a('number');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Response time is acceptable\", function() {\r",
+									"    pm.expect(pm.response.responseTime).to.be.below(2000);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard/staff?dateFrom=2025-01-01&dateTo=2025-12-31",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dashboard",
+								"staff"
+							],
+							"query": [
+								{
+									"key": "dateFrom",
+									"value": "2025-01-01"
+								},
+								{
+									"key": "dateTo",
+									"value": "2025-12-31"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Revenue Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Revenue statistics is an array\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    pm.expect(data).to.be.an('array');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Revenue data structure is correct\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    if (data.length > 0) {\r",
+									"        const firstItem = data[0];\r",
+									"        \r",
+									"        pm.expect(firstItem).to.have.property('period');\r",
+									"        pm.expect(firstItem).to.have.property('revenue');\r",
+									"        pm.expect(firstItem).to.have.property('bookingCount');\r",
+									"        pm.expect(firstItem).to.have.property('avgValue');\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Revenue values are valid\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    data.forEach(function(item) {\r",
+									"        pm.expect(item.revenue).to.be.at.least(0);\r",
+									"        pm.expect(item.bookingCount).to.be.at.least(0);\r",
+									"        pm.expect(item.avgValue).to.be.at.least(0);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Period format is correct\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    const groupBy = pm.request.url.query.get('groupBy') || 'DAY';\r",
+									"    \r",
+									"    if (data.length > 0) {\r",
+									"        pm.expect(data[0].period).to.be.a('string');\r",
+									"        console.log(\"Sample period:\", data[0].period);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Data is sorted by period\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    if (data.length > 1) {\r",
+									"        // Periods should be in order\r",
+									"        pm.expect(data[0].period).to.exist;\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard/revenue?dateFrom=2025-01-01&dateTo=2025-12-31&groupBy={{groupBy}}&branchId={{branchId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dashboard",
+								"revenue"
+							],
+							"query": [
+								{
+									"key": "dateFrom",
+									"value": "2025-01-01"
+								},
+								{
+									"key": "dateTo",
+									"value": "2025-12-31"
+								},
+								{
+									"key": "groupBy",
+									"value": "{{groupBy}}"
+								},
+								{
+									"key": "branchId",
+									"value": "{{branchId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Revenue by Payment Method",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Payment methods breakdown exists\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    pm.expect(data).to.be.an('object');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Common payment methods exist\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    // Check if at least one payment method exists\r",
+									"    const hasPaymentMethod = Object.keys(data).length > 0;\r",
+									"    pm.expect(hasPaymentMethod).to.be.true;\r",
+									"    \r",
+									"    console.log(\"Payment methods:\", Object.keys(data));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All revenue values are numbers\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    Object.values(data).forEach(function(amount) {\r",
+									"        pm.expect(amount).to.be.a('number');\r",
+									"        pm.expect(amount).to.be.at.least(0);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Total revenue calculation\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    let total = Object.values(data).reduce((sum, val) => sum + val, 0);\r",
+									"    pm.expect(total).to.be.at.least(0);\r",
+									"    \r",
+									"    console.log(\"Total revenue from all methods:\", total);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard/revenue/payment-methods?dateFrom=2025-01-01&dateTo=2025-12-31&branchId={{branchId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dashboard",
+								"revenue",
+								"payment-methods"
+							],
+							"query": [
+								{
+									"key": "dateFrom",
+									"value": "2025-01-01"
+								},
+								{
+									"key": "dateTo",
+									"value": "2025-12-31"
+								},
+								{
+									"key": "branchId",
+									"value": "{{branchId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Occupancy Statistics",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Occupancy data structure is correct\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    pm.expect(data).to.have.property('date');\r",
+									"    pm.expect(data).to.have.property('totalRooms');\r",
+									"    pm.expect(data).to.have.property('occupiedRooms');\r",
+									"    pm.expect(data).to.have.property('availableRooms');\r",
+									"    pm.expect(data).to.have.property('occupancyRate');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Room counts are valid\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    pm.expect(data.totalRooms).to.be.at.least(0);\r",
+									"    pm.expect(data.occupiedRooms).to.be.at.least(0);\r",
+									"    pm.expect(data.availableRooms).to.be.at.least(0);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Occupancy calculation is correct\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    // occupied + available should equal total\r",
+									"    const sum = data.occupiedRooms + data.availableRooms;\r",
+									"    pm.expect(sum).to.equal(data.totalRooms);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Occupancy rate is valid percentage\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    pm.expect(data.occupancyRate).to.be.within(0, 100);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Occupancy rate calculation matches\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    if (data.totalRooms > 0) {\r",
+									"        const expectedRate = (data.occupiedRooms / data.totalRooms) * 100;\r",
+									"        pm.expect(data.occupancyRate).to.be.closeTo(expectedRate, 0.1);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Date format is correct\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    pm.expect(data.date).to.match(/^\\d{4}-\\d{2}-\\d{2}$/);\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard/occupancy?date=2025-12-01&branchId={{branchId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dashboard",
+								"occupancy"
+							],
+							"query": [
+								{
+									"key": "date",
+									"value": "2025-12-01"
+								},
+								{
+									"key": "branchId",
+									"value": "{{branchId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Top Selling Room Types",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Top rooms is an array\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    pm.expect(data).to.be.an('array');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Returns correct number of room types\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    const limit = parseInt(pm.request.url.query.get('limit') || '5');\r",
+									"    \r",
+									"    pm.expect(data.length).to.be.at.most(limit);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Room type data structure is correct\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    if (data.length > 0) {\r",
+									"        const firstRoom = data[0];\r",
+									"        \r",
+									"        pm.expect(firstRoom).to.have.property('roomTypeId');\r",
+									"        pm.expect(firstRoom).to.have.property('roomTypeName');\r",
+									"        pm.expect(firstRoom).to.have.property('bookingCount');\r",
+									"        pm.expect(firstRoom).to.have.property('revenue');\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Room types are sorted by revenue\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    for (let i = 0; i < data.length - 1; i++) {\r",
+									"        pm.expect(data[i].revenue).to.be.at.least(data[i + 1].revenue);\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All values are valid\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    data.forEach(function(room) {\r",
+									"        pm.expect(room.bookingCount).to.be.at.least(0);\r",
+									"        pm.expect(room.revenue).to.be.at.least(0);\r",
+									"        pm.expect(room.roomTypeName).to.be.a('string');\r",
+									"    });\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard/top-rooms?limit=5&branchId={{branchId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dashboard",
+								"top-rooms"
+							],
+							"query": [
+								{
+									"key": "limit",
+									"value": "5"
+								},
+								{
+									"key": "branchId",
+									"value": "{{branchId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Customer Growth",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Customer growth is an array\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    pm.expect(data).to.be.an('array');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Growth data structure is correct\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    if (data.length > 0) {\r",
+									"        const firstItem = data[0];\r",
+									"        \r",
+									"        pm.expect(firstItem).to.have.property('period');\r",
+									"        pm.expect(firstItem).to.have.property('newCustomers');\r",
+									"        pm.expect(firstItem).to.have.property('returningCustomers');\r",
+									"        pm.expect(firstItem).to.have.property('totalCustomers');\r",
+									"    }\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Customer counts are valid\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    data.forEach(function(item) {\r",
+									"        pm.expect(item.newCustomers).to.be.at.least(0);\r",
+									"        pm.expect(item.returningCustomers).to.be.at.least(0);\r",
+									"        pm.expect(item.totalCustomers).to.be.at.least(0);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Total customers equals new + returning\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    data.forEach(function(item) {\r",
+									"        const sum = item.newCustomers + item.returningCustomers;\r",
+									"        pm.expect(item.totalCustomers).to.equal(sum);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Growth trend exists\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    if (data.length > 1) {\r",
+									"        console.log(\"Customer growth over\", data.length, \"periods\");\r",
+									"        console.log(\"Latest:\", data[data.length - 1]);\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{accessToken}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard/customer-growth?period={{period}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dashboard",
+								"customer-growth"
+							],
+							"query": [
+								{
+									"key": "period",
+									"value": "{{period}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Get Bookings by Source",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status 200\", function() {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Booking sources is an object\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    pm.expect(data).to.be.an('object');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Common booking sources exist\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    // Expected sources\r",
+									"    const expectedSources = ['WEBSITE', 'MOBILE_APP', 'WALK_IN', 'PHONE'];\r",
+									"    \r",
+									"    const hasAtLeastOneSource = Object.keys(data).length > 0;\r",
+									"    pm.expect(hasAtLeastOneSource).to.be.true;\r",
+									"    \r",
+									"    console.log(\"Booking sources:\", Object.keys(data));\r",
+									"});\r",
+									"\r",
+									"pm.test(\"All counts are valid numbers\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    Object.entries(data).forEach(function([source, count]) {\r",
+									"        pm.expect(count).to.be.a('number');\r",
+									"        pm.expect(count).to.be.at.least(0);\r",
+									"    });\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Total bookings calculation\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    const total = Object.values(data).reduce((sum, count) => sum + count, 0);\r",
+									"    pm.expect(total).to.be.at.least(0);\r",
+									"    \r",
+									"    console.log(\"Total bookings from all sources:\", total);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Source distribution\", function() {\r",
+									"    const data = pm.response.json().result;\r",
+									"    \r",
+									"    if (Object.keys(data).length > 0) {\r",
+									"        const entries = Object.entries(data);\r",
+									"        const sorted = entries.sort((a, b) => b[1] - a[1]);\r",
+									"        \r",
+									"        console.log(\"Most popular source:\", sorted[0][0], \"with\", sorted[0][1], \"bookings\");\r",
+									"    }\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {},
+								"requests": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/dashboard/bookings/source?dateFrom=2025-01-01&dateTo=2025-12-31&branchId={{branchId}}",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"dashboard",
+								"bookings",
+								"source"
+							],
+							"query": [
+								{
+									"key": "dateFrom",
+									"value": "2025-01-01"
+								},
+								{
+									"key": "dateTo",
+									"value": "2025-12-31"
+								},
+								{
+									"key": "branchId",
+									"value": "{{branchId}}"
+								}
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"requests": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "accessToken",
+			"value": ""
+		},
+		{
+			"key": "refreshToken",
+			"value": ""
+		},
+		{
+			"key": "userId",
+			"value": ""
+		},
+		{
+			"key": "branchId",
+			"value": ""
+		},
+		{
+			"key": "amenityId",
+			"value": ""
+		},
+		{
+			"key": "facilityId",
+			"value": ""
+		},
+		{
+			"key": "roomTypeId",
+			"value": ""
+		},
+		{
+			"key": "roomId",
+			"value": ""
+		},
+		{
+			"key": "serviceId",
+			"value": ""
+		},
+		{
+			"key": "promotionId",
+			"value": ""
+		},
+		{
+			"key": "bookingId",
+			"value": ""
+		},
+		{
+			"key": "bookingRoomId",
+			"value": ""
+		},
+		{
+			"key": "serviceBookingId",
+			"value": ""
+		},
+		{
+			"key": "paymentId",
+			"value": ""
+		},
+		{
+			"key": "roleId",
+			"value": ""
+		},
+		{
+			"key": "permissionId",
+			"value": ""
+		},
+		{
+			"key": "sessionId",
+			"value": ""
+		},
+		{
+			"key": "documentId",
+			"value": ""
+		}
+	]
+}

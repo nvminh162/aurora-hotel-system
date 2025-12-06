@@ -11,6 +11,8 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 @Getter
@@ -70,10 +72,22 @@ public class User extends BaseEntity {
     )
     Set<Role> roles;
 
+    // Permission overrides - list of permission IDs that are disabled for this user
+    @ElementCollection
+    @CollectionTable(name = "user_disabled_permissions", joinColumns = @JoinColumn(name = "user_id"))
+    @Column(name = "permission_id")
+    @Builder.Default
+    List<String> disabledPermissions = new ArrayList<>();
+
     // Account status
     @Column(nullable = false)
     @Builder.Default
     Boolean active = true;
+    
+    // Email verification status
+    @Column(nullable = false)
+    @Builder.Default
+    Boolean emailVerified = false;
 
     // Security tracking
     LocalDateTime lastLoginAt;
