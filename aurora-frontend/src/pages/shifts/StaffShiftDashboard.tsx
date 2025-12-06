@@ -178,31 +178,45 @@ const StaffShiftDashboard = () => {
 
   const handleCheckIn = async () => {
     if (!currentAssignment) {
-      toast.error('No active shift assignment found');
+      toast.error('Không tìm thấy ca làm việc');
       return;
     }
 
     try {
       await dispatch(checkInToShift(currentAssignment.id)).unwrap();
-      toast.success('Checked in successfully!');
-      loadAllData();
+      toast.success('Check-in thành công!');
+      
+      // Reload tất cả dữ liệu để cập nhật giao diện
+      await loadAllData();
+      
+      // Thông báo cho user biết dữ liệu đã được cập nhật
+      toast.success('Đã cập nhật lịch sử và thống kê', {
+        description: 'Kiểm tra tab Lịch sử và Thống kê để xem chi tiết',
+      });
     } catch (err: any) {
-      toast.error(err || 'Failed to check in');
+      toast.error(err || 'Không thể check-in');
     }
   };
 
   const handleCheckOut = async () => {
     if (!currentAssignment) {
-      toast.error('No active shift found');
+      toast.error('Không tìm thấy ca làm việc');
       return;
     }
 
     try {
       await dispatch(checkOutFromShift(currentAssignment.id)).unwrap();
-      toast.success('Checked out successfully!');
-      loadAllData();
+      toast.success('Check-out thành công!');
+      
+      // Reload tất cả dữ liệu để cập nhật giao diện
+      await loadAllData();
+      
+      // Thông báo cho user biết dữ liệu đã được cập nhật
+      toast.success('Đã cập nhật lịch sử và thống kê', {
+        description: 'Ca làm việc đã hoàn thành. Xem chi tiết trong tab Lịch sử',
+      });
     } catch (err: any) {
-      toast.error(err || 'Failed to check out');
+      toast.error(err || 'Không thể check-out');
     }
   };
 
