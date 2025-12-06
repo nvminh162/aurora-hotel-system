@@ -269,12 +269,6 @@ export default function BookingPage() {
     toast.info('Chức năng thanh toán đang được phát triển');
   };
 
-  const handleSearch = () => {
-    // Trigger re-fetch by updating a dummy state or just show toast
-    toast.info('Đang tìm kiếm phòng phù hợp...');
-    // The useEffect will automatically trigger based on filter changes
-  };
-
   const getRoomStatusBadge = (status: string) => {
     const statusConfig: Record<string, { label: string; className: string }> = {
       AVAILABLE: { label: 'Trống', className: 'bg-green-100 text-green-800' },
@@ -335,7 +329,27 @@ export default function BookingPage() {
             </Button>
           </div>
           <div className="max-w-6xl mx-auto">
-            <div className="grid grid-cols-1 md:grid-cols-8 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-7 gap-4">
+              <div>
+                <Label htmlFor="checkIn">Check-in</Label>
+                <Input
+                  id="checkIn"
+                  type="date"
+                  value={filter.checkIn}
+                  onChange={(e) => setFilter(prev => ({ ...prev, checkIn: e.target.value }))}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              <div>
+                <Label htmlFor="checkOut">Check-out</Label>
+                <Input
+                  id="checkOut"
+                  type="date"
+                  value={filter.checkOut}
+                  onChange={(e) => setFilter(prev => ({ ...prev, checkOut: e.target.value }))}
+                  min={filter.checkIn}
+                />
+              </div>
               <div>
                 <Label htmlFor="category">Hạng phòng</Label>
                 <Select
@@ -360,37 +374,6 @@ export default function BookingPage() {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-              <div>
-                <Label htmlFor="checkIn">Check-in</Label>
-                <Input
-                  id="checkIn"
-                  type="date"
-                  value={filter.checkIn}
-                  onChange={(e) => setFilter(prev => ({ ...prev, checkIn: e.target.value }))}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              <div>
-                <Label htmlFor="checkOut">Check-out</Label>
-                <Input
-                  id="checkOut"
-                  type="date"
-                  value={filter.checkOut}
-                  onChange={(e) => setFilter(prev => ({ ...prev, checkOut: e.target.value }))}
-                  min={filter.checkIn}
-                />
-              </div>
-              <div>
-                <Label htmlFor="guests">Guests</Label>
-                <Input
-                  id="guests"
-                  type="number"
-                  value={filter.guests}
-                  onChange={(e) => setFilter(prev => ({ ...prev, guests: parseInt(e.target.value) || 1 }))}
-                  min={1}
-                  max={roomType?.maxOccupancy || 10}
-                />
               </div>
               <div>
                 <Label htmlFor="roomType">Loại phòng</Label>
@@ -432,6 +415,24 @@ export default function BookingPage() {
                 </Select>
               </div>
               <div>
+                <Label htmlFor="guests">Guest</Label>
+                <Select
+                  value={filter.guests.toString()}
+                  onValueChange={(value) => setFilter(prev => ({ ...prev, guests: parseInt(value) }))}
+                >
+                  <SelectTrigger id="guests">
+                    <SelectValue placeholder="Số khách" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num} {num === 1 ? 'người' : 'người'}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
                 <Label htmlFor="priceRange">Giá</Label>
                 <Select
                   value={filter.priceRange || "all"}
@@ -448,14 +449,6 @@ export default function BookingPage() {
                     <SelectItem value="10000000+">Trên 10 triệu</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
-              <div className="flex items-end">
-                <Button 
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                  onClick={handleSearch}
-                >
-                  Tìm kiếm
-                </Button>
               </div>
             </div>
           </div>
