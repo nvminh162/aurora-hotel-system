@@ -10,8 +10,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -27,9 +25,6 @@ import java.util.List;
 public class SecurityConfig {
 
 
-    private final CustomJwtDecoder customJwtDecoder;
-    private final CustomJwtAuthenticationConverter customJwtAuthenticationConverter;
-
     private static final String[] PUBLIC_POST_ENDPOINTS = {
             // Auth endpoints - Session management with Redis
             "/api/v1/auth/register",
@@ -37,15 +32,15 @@ public class SecurityConfig {
             "/api/v1/auth/logout",
             "/api/v1/auth/refresh-token",
             "/api/v1/auth/refresh",
-            
+
             // Password reset endpoints - PUBLIC for forgot/reset password
             "/api/v1/auth/forgot-password",
             "/api/v1/auth/reset-password",
-            
+
             // Email verification endpoints - PUBLIC
             "/api/v1/auth/verify-email",
             "/api/v1/auth/resend-verification-email",
-            
+
             "/api/v1/rag/**",
             "/api/v1/documents/**",
 
@@ -54,7 +49,7 @@ public class SecurityConfig {
 
             // VNPay IPN callback - MUST be public for VNPay server-to-server callback
             "/api/v1/payments/vnpay/ipn",
-            
+
             // Cloudinary upload endpoints
             "/api/v1/cloudinary/upload",
             "/api/v1/cloudinary/upload-multiple",
@@ -78,16 +73,18 @@ public class SecurityConfig {
             "/api/v1/rag/**",
             "/api/v1/documents/**",
             "/api/v1/payments/vnpay/return",
-            
+
             // Cloudinary test endpoint
             "/api/v1/cloudinary/test",
-            
+
             // Room availability - PUBLIC for checking availability
             "/api/v1/room-availability/check/**",
             "/api/v1/room-availability/find-available/**",
             "/api/v1/room-availability/calendar/**",
             "/api/v1/room-availability/count-available/**"
     };
+    private final CustomJwtDecoder customJwtDecoder;
+    private final CustomJwtAuthenticationConverter customJwtAuthenticationConverter;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
