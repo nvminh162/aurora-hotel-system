@@ -175,7 +175,7 @@ export default function BookingPage() {
         const roomsWithTypes: Array<{ room: Room; roomType: RoomType }> = [];
         allRoomsResponses.forEach((roomsRes, index) => {
           if (roomsRes.result?.content) {
-            const availableRooms = roomsRes.result.content.filter(r => r.status === 'AVAILABLE');
+            const availableRooms = roomsRes.result.content.filter(r => r.status === 'READY');
             availableRooms.forEach(room => {
               roomsWithTypes.push({ room, roomType: targetRoomTypes[index] });
             });

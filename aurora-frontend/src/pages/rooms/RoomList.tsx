@@ -31,12 +31,10 @@ import type { Branch } from '@/types/branch.types';
 
 // Status configurations
 const roomStatusConfig: Record<RoomStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' }> = {
-  AVAILABLE: { label: 'Trống', variant: 'success' },
-  OCCUPIED: { label: 'Có khách', variant: 'default' },
-  RESERVED: { label: 'Đã đặt', variant: 'warning' },
+  READY: { label: 'Sẵn sàng', variant: 'success' },
+  CLEANING: { label: 'Đang dọn', variant: 'warning' },
   MAINTENANCE: { label: 'Bảo trì', variant: 'secondary' },
-  CLEANING: { label: 'Đang dọn', variant: 'outline' },
-  OUT_OF_ORDER: { label: 'Hỏng', variant: 'destructive' },
+  LOCKED: { label: 'Khoá phòng', variant: 'destructive' },
 };
 
 export default function RoomList() {
@@ -137,14 +135,14 @@ export default function RoomList() {
     fetchRooms();
   }, [fetchRooms]);
 
-  // Handle delete room (soft delete - change status to OUT_OF_ORDER)
+  // Handle delete room (soft delete - change status to LOCKED)
   const handleDeleteRoom = async () => {
     if (!selectedRoomId) return;
     
     try {
-      // Soft delete: Update status to OUT_OF_ORDER instead of deleting
-      await roomApi.update(selectedRoomId, { status: 'OUT_OF_ORDER' });
-      toast.success('Đã tạm ngưng phòng thành công');
+      // Soft delete: Update status to LOCKED instead of deleting
+      await roomApi.update(selectedRoomId, { status: 'LOCKED' });
+      toast.success('Đã khoá phòng thành công');
       setDeleteDialogOpen(false);
       setSelectedRoomId(null);
       fetchRooms();
