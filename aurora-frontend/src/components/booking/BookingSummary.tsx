@@ -136,38 +136,100 @@ export default function BookingSummary({
             Chưa chọn phòng nào
           </p>
         ) : (
-          <div className="space-y-2 max-h-64 overflow-y-auto">
-            {bookingRooms.map((room) => (
-              <div
-                key={room.roomId}
-                className="flex items-center gap-2 p-2 bg-gray-50 rounded"
-              >
-                <img
-                  src={room.imageUrl || fallbackImage}
-                  alt={room.roomTypeName}
-                  className="w-12 h-12 object-cover rounded"
-                  onError={handleImageError}
-                />
-                <div className="grow">
-                  <p className="text-sm font-medium">
-                    {room.roomTypeName}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    {formatCurrency(room.basePrice)}/đêm
-                  </p>
+          <div className="space-y-3 max-h-96 overflow-y-auto">
+            {bookingRooms.map((room) => {
+              const extras = roomExtras?.[room.roomId];
+              const roomServicesTotal = extras
+                ? extras.services.reduce(
+                    (sum, service) => sum + service.price * service.quantity,
+                    0
+                  )
+                : 0;
+
+              return (
+                <div
+                  key={room.roomId}
+                  className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+                >
+                  {/* Room Info */}
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={room.imageUrl || fallbackImage}
+                      alt={room.roomTypeName}
+                      className="w-16 h-16 object-cover rounded flex-shrink-0"
+                      onError={handleImageError}
+                    />
+                    <div className="grow min-w-0">
+                      <p className="text-sm font-semibold text-gray-900">
+                        {room.roomTypeName}
+                      </p>
+                      <p className="text-xs text-gray-600 mt-1">
+                        {formatCurrency(room.basePrice)}/đêm
+                      </p>
+                      
+                      {/* Services for this room */}
+                      {extras && extras.services.length > 0 && (
+                        <div className="mt-2 pt-2 border-t border-gray-200">
+                          <p className="text-xs font-medium text-gray-700 mb-1">
+                            Dịch vụ đã chọn:
+                          </p>
+                          <div className="space-y-1">
+                            {extras.services.map((service) => (
+                              <div
+                                key={service.serviceId}
+                                className="flex items-center justify-between text-xs"
+                              >
+                                <span className="text-gray-600">
+                                  {service.serviceName}
+                                  {service.quantity > 1 && (
+                                    <span className="text-gray-500 ml-1">
+                                      (x{service.quantity})
+                                    </span>
+                                  )}
+                                </span>
+                                <span className="text-gray-700 font-medium">
+                                  {formatCurrency(service.price * service.quantity)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                          {roomServicesTotal > 0 && (
+                            <div className="flex items-center justify-between mt-2 pt-1 border-t border-gray-200">
+                              <span className="text-xs font-medium text-gray-700">
+                                Tổng dịch vụ:
+                              </span>
+                              <span className="text-xs font-semibold text-primary">
+                                {formatCurrency(roomServicesTotal)}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Note for this room */}
+                      {extras?.note && (
+                        <div className="mt-2 pt-2 border-t border-gray-200">
+                          <p className="text-xs text-gray-600 italic">
+                            <span className="font-medium">Ghi chú: </span>
+                            {extras.note}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                    {onRemoveRoom && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onRemoveRoom(room.roomId)}
+                        className="text-red-600 hover:text-red-700 flex-shrink-0"
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                 </div>
-                {onRemoveRoom && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => onRemoveRoom(room.roomId)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

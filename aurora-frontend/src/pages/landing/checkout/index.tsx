@@ -287,8 +287,8 @@ export default function CheckoutPage() {
         {/* Progress Bar */}
         <ProgressBar currentStep={currentStep} />
 
-        {currentStep === 1 || currentStep === 2 ? (
-          // Step 1 & 2: Use same layout as Booking page (no Card wrapper, use BookingSummary)
+        {currentStep === 1 || currentStep === 2 || currentStep === 3 ? (
+          // Step 1, 2 & 3: Use same layout as Booking page (no Card wrapper, use BookingSummary)
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
             {/* Main Content */}
             <div className="lg:col-span-2">

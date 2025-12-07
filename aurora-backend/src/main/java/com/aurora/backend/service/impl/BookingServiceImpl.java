@@ -54,12 +54,22 @@ public class BookingServiceImpl implements BookingService {
         Branch branch = branchRepository.findById(request.getBranchId())
                 .orElseThrow(() -> new AppException(ErrorCode.BRANCH_NOT_EXISTED));
         
-        User customer = userRepository.findById(request.getCustomerId())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        
         Booking booking = bookingMapper.toBooking(request);
         booking.setBranch(branch);
-        booking.setCustomer(customer);
+        
+        // Set customer if provided, otherwise use guest information (walk-in guest)
+        if (request.getCustomerId() != null && !request.getCustomerId().trim().isEmpty()) {
+            User customer = userRepository.findById(request.getCustomerId())
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+            booking.setCustomer(customer);
+        } else {
+            // Walk-in guest: use guest information
+            booking.setCustomer(null);
+            booking.setGuestFullName(request.getGuestFullName());
+            booking.setGuestEmail(request.getGuestEmail());
+            booking.setGuestPhone(request.getGuestPhone());
+            log.info("Creating booking for walk-in guest: {}", request.getGuestFullName());
+        }
         
         String bookingCode = generateBookingCode();
         while (bookingRepository.existsByBookingCode(bookingCode)) {
