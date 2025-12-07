@@ -5,25 +5,27 @@ import lombok.experimental.FieldDefaults;
 
 import java.util.List;
 
-@Data
+@Getter
+@Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class ServiceResponse {
+public class ServiceCategoryResponse {
     String id;
     String branchId;
     String branchName;
     String name;
-    String categoryId;
-    String categoryName;
+    String code;
     String description;
-    java.math.BigDecimal basePrice;
-    String unit;
-    Integer durationMinutes;
-    Integer maxCapacityPerSlot;
-    Boolean requiresBooking;
+    Integer displayOrder;
     Boolean active;
-    String operatingHours;
-    List<String> images;
+    String imageUrl;
+    
+    // Số lượng services trong category này
+    Integer totalServices;
+    
+    // Danh sách services (optional, có thể null nếu không cần load)
+    List<ServiceResponse> services;
 }
+

@@ -1,62 +1,101 @@
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import VideoHero from "@/components/custom/VideoHero";
+import { serviceCategoryApi } from '@/services/serviceCategoryApi';
+import { serviceApi } from '@/services/serviceApi';
+import type { ServiceCategory } from '@/types/serviceCategory.types';
+import type { HotelService } from '@/types/service.types';
+import { toast } from 'sonner';
+import { Loader2, Sparkles, Clock, Users, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import fallbackImage from '@/assets/images/commons/fallback.png';
 
 export default function ServicePage() {
-  const services = [
-    {
-      id: 1,
-      name: 'Spa & Wellness',
-      icon: '🧘‍♀️',
-      description: 'Thư giãn và chăm sóc sức khỏe với các liệu trình spa chuyên nghiệp',
-      features: ['Massage trị liệu', 'Chăm sóc da mặt', 'Yoga & Meditation', 'Sauna & Steam'],
-      price: 'Từ 800.000đ',
-      hours: '6:00 - 22:00'
-    },
-    {
-      id: 2,
-      name: 'Nhà hàng & Bar',
-      icon: '🍽️',
-      description: 'Ẩm thực 5 sao với các món ăn đặc sắc từ khắp nơi trên thế giới',
-      features: ['Ẩm thực Á - Âu', 'Buffet sáng tự chọn', 'Room service 24/7', 'Cocktail bar'],
-      price: 'Từ 300.000đ',
-      hours: '24/7'
-    },
-    {
-      id: 3,
-      name: 'Hồ bơi & Gym',
-      icon: '🏊‍♂️',
-      description: 'Khu vực thể thao và giải trí với hồ bơi ngoài trời và phòng gym hiện đại',
-      features: ['Hồ bơi vô cực', 'Phòng gym 24/7', 'Yoga class', 'Personal trainer'],
-      price: 'Miễn phí cho khách lưu trú',
-      hours: '5:00 - 23:00'
-    },
-    {
-      id: 4,
-      name: 'Dịch vụ xe đưa đón',
-      icon: '🚗',
-      description: 'Dịch vụ đưa đón sân bay và tham quan thành phố',
-      features: ['Đưa đón sân bay', 'Tour thành phố', 'Thuê xe tự lái', 'Xe sang VIP'],
-      price: 'Từ 200.000đ',
-      hours: '24/7'
-    },
-    {
-      id: 5,
-      name: 'Hội nghị & Sự kiện',
-      icon: '🎪',
-      description: 'Tổ chức hội nghị, tiệc cưới và các sự kiện đặc biệt',
-      features: ['Phòng hội nghị', 'Tổ chức tiệc cưới', 'Event planning', 'Thiết bị AV'],
-      price: 'Liên hệ báo giá',
-      hours: 'Theo yêu cầu'
-    },
-    {
-      id: 6,
-      name: 'Kids Club',
-      icon: '🎈',
-      description: 'Khu vui chơi an toàn và thú vị dành cho trẻ em',
-      features: ['Khu vui chơi', 'Hoạt động giáo dục', 'Giữ trẻ', 'Game center'],
-      price: 'Miễn phí cho khách lưu trú',
-      hours: '8:00 - 20:00'
+  const navigate = useNavigate();
+  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+  const [servicesByCategory, setServicesByCategory] = useState<Record<string, HotelService[]>>({});
+  const [loading, setLoading] = useState(true);
+  
+  // Get branchId from localStorage
+  const branchId = localStorage.getItem('branchId') || 'branch-hcm-001';
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch all active categories
+        const categoriesRes = await serviceCategoryApi.getByBranch(branchId);
+        const activeCategories = (categoriesRes.result || [])
+          .filter(cat => cat.active)
+          .sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
+        setCategories(activeCategories);
+        
+        // Fetch services for each category
+        const servicesMap: Record<string, HotelService[]> = {};
+        
+        await Promise.all(
+          activeCategories.map(async (category) => {
+            try {
+              const servicesRes = await serviceApi.search({
+                hotelId: branchId,
+                categoryId: category.id,
+                page: 0,
+                size: 100,
+              });
+              
+              const activeServices = (servicesRes.result?.content || []).filter(
+                service => service.active !== false
+              );
+              servicesMap[category.id] = activeServices;
+            } catch (error) {
+              console.error(`Failed to fetch services for category ${category.id}:`, error);
+              servicesMap[category.id] = [];
+            }
+          })
+        );
+        
+        setServicesByCategory(servicesMap);
+      } catch (error) {
+        console.error('Failed to fetch service data:', error);
+        toast.error('Không thể tải thông tin dịch vụ');
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (branchId) {
+      fetchData();
     }
-  ];
+  }, [branchId]);
+
+  const formatCurrency = (value: number): string => {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(value);
+  };
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = e.currentTarget;
+    if (img.src !== fallbackImage) {
+      img.src = fallbackImage;
+    }
+  };
+
+  const handleBookNow = () => {
+    navigate('/booking');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -66,126 +105,194 @@ export default function ServicePage() {
         subtitle="Trải nghiệm những dịch vụ đẳng cấp thế giới"
       />
 
-      {/* Services Grid */}
-      <section className="py-16">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Dịch vụ của chúng tôi</h2>
-            <p className="text-xl text-gray-600">Đáp ứng mọi nhu cầu của bạn trong chuyến lưu trú</p>
+      {/* Services by Category */}
+      {categories.length === 0 ? (
+        <section className="py-16">
+          <div className="container mx-auto px-4 text-center">
+            <p className="text-gray-500">Chưa có dịch vụ nào để hiển thị.</p>
           </div>
+        </section>
+      ) : (
+        categories.map((category) => {
+          const services = servicesByCategory[category.id] || [];
+          if (services.length === 0) return null;
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {services.map((service) => (
-              <div key={service.id} className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow">
-                <div className="p-6">
-                  <div className="text-center mb-4">
-                    <div className="w-16 h-16 mx-auto mb-3 bg-blue-100 rounded-full flex items-center justify-center">
-                      <span className="text-3xl">{service.icon}</span>
-                    </div>
-                    <h3 className="text-xl font-semibold">{service.name}</h3>
+          return (
+            <section key={category.id} className="py-16 bg-white">
+              <div className="container mx-auto px-4">
+                {/* Category Header */}
+                <div className="text-center mb-12">
+                  <div className="flex items-center justify-center gap-3 mb-4">
+                    {category.imageUrl && (
+                      <img
+                        src={category.imageUrl || fallbackImage}
+                        alt={category.name}
+                        className="w-16 h-16 object-cover rounded-lg"
+                        onError={handleImageError}
+                      />
+                    )}
+                    <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
+                      {category.name}
+                    </h2>
                   </div>
+                  {category.description && (
+                    <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                      {category.description}
+                    </p>
+                  )}
+                </div>
 
-                  <p className="text-gray-600 mb-4 text-center">{service.description}</p>
+                {/* Services Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {services.map((service) => (
+                    <Card
+                      key={service.id}
+                      className="group hover:shadow-xl transition-all duration-300 overflow-hidden"
+                    >
+                      {/* Service Image */}
+                      <div className="relative h-48 overflow-hidden">
+                        <img
+                          src={service.images?.[0] || fallbackImage}
+                          alt={service.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          onError={handleImageError}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                        {service.requiresBooking && (
+                          <Badge className="absolute top-3 right-3 bg-amber-600">
+                            Cần đặt trước
+                          </Badge>
+                        )}
+                      </div>
 
-                  <div className="space-y-2 mb-4">
-                    <h4 className="font-medium text-gray-700">Điểm nổi bật:</h4>
-                    <ul className="space-y-1">
-                      {service.features.map((feature, index) => (
-                        <li key={index} className="text-sm text-gray-600 flex items-center">
-                          <span className="w-2 h-2 bg-blue-600 rounded-full mr-2"></span>
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
+                      {/* Service Content */}
+                      <CardContent className="p-6">
+                        <h3 className="text-xl font-bold text-gray-900 mb-2">
+                          {service.name}
+                        </h3>
+                        
+                        {service.description && (
+                          <p className="text-gray-600 mb-4 line-clamp-2">
+                            {service.description}
+                          </p>
+                        )}
 
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span className="text-gray-500">Giá:</span>
-                      <span className="font-medium text-blue-600">{service.price}</span>
-                    </div>
-                    <div className="flex justify-between text-sm mb-4">
-                      <span className="text-gray-500">Giờ hoạt động:</span>
-                      <span className="font-medium">{service.hours}</span>
-                    </div>
-                  </div>
+                        {/* Service Details */}
+                        <div className="space-y-2 mb-4">
+                          {service.durationMinutes && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Clock className="h-4 w-4 text-amber-600" />
+                              <span>{service.durationMinutes} phút</span>
+                            </div>
+                          )}
+                          
+                          {service.maxCapacityPerSlot && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Users className="h-4 w-4 text-amber-600" />
+                              <span>Tối đa {service.maxCapacityPerSlot} người</span>
+                            </div>
+                          )}
+                          
+                          {service.operatingHours && (
+                            <div className="flex items-center gap-2 text-sm text-gray-600">
+                              <Sparkles className="h-4 w-4 text-amber-600" />
+                              <span>{service.operatingHours}</span>
+                            </div>
+                          )}
+                        </div>
 
-                  <div className="flex gap-2">
-                    <button className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium">
-                      Đặt dịch vụ
-                    </button>
-                    <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium">
-                      Chi tiết
-                    </button>
-                  </div>
+                        {/* Price */}
+                        <div className="flex items-center justify-between pt-4 border-t">
+                          <div>
+                            <p className="text-sm text-gray-500">Giá từ</p>
+                            <p className="text-2xl font-bold text-amber-600">
+                              {formatCurrency(service.basePrice)}
+                            </p>
+                            {service.unit && (
+                              <p className="text-xs text-gray-500">/{service.unit}</p>
+                            )}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </section>
+          );
+        })
+      )}
 
-      {/* Special Services */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">Dịch vụ đặc biệt</h2>
-            <p className="text-xl text-gray-600">Những trải nghiệm độc đáo chỉ có tại Aurora Hotel</p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <div className="bg-white p-8 rounded-xl shadow-lg">
-              <div className="flex items-center mb-4">
-                <span className="text-4xl mr-4">🛎️</span>
-                <div>
-                  <h3 className="text-xl font-semibold">Butler Service</h3>
-                  <p className="text-gray-600">Dịch vụ quản gia cá nhân 24/7</p>
-                </div>
-              </div>
-              <p className="text-gray-600 mb-4">
-                Dành riêng cho khách lưu trú tại Suite và Presidential. Quản gia cá nhân sẽ đáp ứng mọi yêu cầu 
-                từ đặt bàn ăn, sắp xếp lịch trình cho đến các dịch vụ cá nhân hóa khác.
+      {/* Experience Section */}
+      <section className="py-20 bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <div className="mb-8">
+              <Sparkles className="h-16 w-16 mx-auto text-amber-600 mb-4" />
+              <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                Trải nghiệm dịch vụ chúng tôi
+              </h2>
+              <p className="text-xl text-gray-700 mb-8">
+                Khám phá và đặt ngay những dịch vụ tuyệt vời để làm phong phú thêm chuyến lưu trú của bạn
               </p>
-              <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                Tìm hiểu thêm
-              </button>
             </div>
 
-            <div className="bg-white p-8 rounded-xl shadow-lg">
-              <div className="flex items-center mb-4">
-                <span className="text-4xl mr-4">🚁</span>
-                <div>
-                  <h3 className="text-xl font-semibold">Helicopter Transfer</h3>
-                  <p className="text-gray-600">Dịch vụ di chuyển bằng trực thăng</p>
-                </div>
+            {/* Features */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+              <div className="bg-white rounded-lg p-6 shadow-lg">
+                <CheckCircle2 className="h-10 w-10 text-amber-600 mx-auto mb-4" />
+                <h3 className="font-bold text-lg mb-2">Dịch vụ đa dạng</h3>
+                <p className="text-gray-600 text-sm">
+                  Từ spa, gym đến dịch vụ vận chuyển, đáp ứng mọi nhu cầu
+                </p>
               </div>
-              <p className="text-gray-600 mb-4">
-                Trải nghiệm đẳng cấp với dịch vụ di chuyển bằng trực thăng từ sân bay hoặc các điểm tham quan. 
-                Ngắm nhìn thành phố từ trên cao trong hành trình tuyệt vời.
-              </p>
-              <button className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                Đặt lịch bay
-              </button>
+              
+              <div className="bg-white rounded-lg p-6 shadow-lg">
+                <CheckCircle2 className="h-10 w-10 text-amber-600 mx-auto mb-4" />
+                <h3 className="font-bold text-lg mb-2">Chất lượng cao</h3>
+                <p className="text-gray-600 text-sm">
+                  Đội ngũ chuyên nghiệp và trang thiết bị hiện đại
+                </p>
+              </div>
+              
+              <div className="bg-white rounded-lg p-6 shadow-lg">
+                <CheckCircle2 className="h-10 w-10 text-amber-600 mx-auto mb-4" />
+                <h3 className="font-bold text-lg mb-2">Đặt trước dễ dàng</h3>
+                <p className="text-gray-600 text-sm">
+                  Đặt dịch vụ ngay trong quá trình đặt phòng
+                </p>
+              </div>
             </div>
+
+            {/* CTA Button */}
+            <Button
+              onClick={handleBookNow}
+              size="lg"
+              className="bg-amber-600 hover:bg-amber-700 text-white px-8 py-6 text-lg font-semibold shadow-xl hover:shadow-2xl transition-all duration-300"
+            >
+              Đặt phòng và dịch vụ ngay
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
           </div>
         </div>
       </section>
 
       {/* Contact Section */}
-      <section className="py-16">
+      <section className="py-16 bg-white">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">Cần hỗ trợ?</h2>
           <p className="text-xl text-gray-600 mb-8">
             Đội ngũ dịch vụ khách hàng của chúng tôi luôn sẵn sàng hỗ trợ bạn 24/7
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
-              Liên hệ ngay
-            </button>
-            <button className="px-8 py-3 border-2 border-blue-600 text-blue-600 rounded-lg hover:bg-blue-600 hover:text-white transition-colors font-medium">
-              Chat trực tuyến
-            </button>
-          </div>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={handleBookNow}
+            className="border-amber-600 text-amber-600 hover:bg-amber-50"
+          >
+            Liên hệ đặt dịch vụ
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
       </section>
     </div>

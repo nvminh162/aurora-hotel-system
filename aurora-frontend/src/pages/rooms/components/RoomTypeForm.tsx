@@ -14,8 +14,10 @@ import {
   RefreshCcw,
   Sparkles,
   Check,
-  DollarSign
+  DollarSign,
+  Image as ImageIcon
 } from 'lucide-react';
+import fallbackImage from '@/assets/images/commons/fallback.png';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,8 +35,9 @@ import {
 
 import { branchApi } from '@/services/branchApi';
 import { amenityApi } from '@/services/amenityApi';
+import { roomCategoryApi } from '@/services/roomApi';
 import type { Branch } from '@/types/branch.types';
-import type { Amenity, RoomType, RoomTypeCreationRequest, RoomTypeUpdateRequest } from '@/types/room.types';
+import type { Amenity, RoomCategory, RoomType, RoomTypeCreationRequest, RoomTypeUpdateRequest } from '@/types/room.types';
 
 // ============================================
 // Form State Types
@@ -42,6 +45,7 @@ import type { Amenity, RoomType, RoomTypeCreationRequest, RoomTypeUpdateRequest 
 
 interface FormState {
   branchId: string;
+  categoryId: string;
   name: string;
   code: string;
   priceFrom: number;
@@ -51,10 +55,12 @@ interface FormState {
   sizeM2: number;
   refundable: boolean;
   amenityIds: string[];
+  imageUrl: string;
 }
 
 interface FormErrors {
   branchId?: string;
+  categoryId?: string;
   name?: string;
   code?: string;
   priceFrom?: string;
@@ -89,13 +95,16 @@ export default function RoomTypeForm({
 }: RoomTypeFormProps) {
   // ========== States ==========
   const [branches, setBranches] = useState<Branch[]>([]);
+  const [categories, setCategories] = useState<RoomCategory[]>([]);
   const [amenities, setAmenities] = useState<Amenity[]>([]);
   const [isLoadingBranches, setIsLoadingBranches] = useState(true);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(false);
   const [isLoadingAmenities, setIsLoadingAmenities] = useState(true);
   const [errors, setErrors] = useState<FormErrors>({});
 
   const [formState, setFormState] = useState<FormState>({
     branchId: roomType?.branchId || '',
+    categoryId: roomType?.categoryId || '',
     name: roomType?.name || '',
     code: roomType?.code || '',
     priceFrom: roomType?.priceFrom || 500000,
@@ -105,6 +114,7 @@ export default function RoomTypeForm({
     sizeM2: roomType?.sizeM2 || 25,
     refundable: roomType?.refundable ?? true,
     amenityIds: roomType?.amenities?.map(a => a.id) || [],
+    imageUrl: roomType?.imageUrl || '',
   });
 
   // ========== Effects ==========
@@ -114,6 +124,7 @@ export default function RoomTypeForm({
     if (roomType) {
       setFormState({
         branchId: roomType.branchId || '',
+        categoryId: roomType.categoryId || '',
         name: roomType.name || '',
         code: roomType.code || '',
         priceFrom: roomType.priceFrom || 500000,
@@ -123,6 +134,7 @@ export default function RoomTypeForm({
         sizeM2: roomType.sizeM2 || 25,
         refundable: roomType.refundable ?? true,
         amenityIds: roomType.amenities?.map(a => a.id) || [],
+        imageUrl: roomType.imageUrl || '',
       });
       setErrors({});
     }
@@ -143,6 +155,28 @@ export default function RoomTypeForm({
     };
     fetchBranches();
   }, []);
+
+  // Fetch categories when branch changes
+  useEffect(() => {
+    const fetchCategories = async () => {
+      if (!formState.branchId) {
+        setCategories([]);
+        return;
+      }
+      
+      try {
+        setIsLoadingCategories(true);
+        const response = await roomCategoryApi.getByBranch(formState.branchId);
+        setCategories(response.result || []);
+      } catch (error) {
+        console.error('Failed to fetch categories:', error);
+        setCategories([]);
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+    fetchCategories();
+  }, [formState.branchId]);
 
   // Fetch amenities
   useEffect(() => {
@@ -174,6 +208,9 @@ export default function RoomTypeForm({
 
     if (!formState.branchId) {
       newErrors.branchId = 'Vui lòng chọn chi nhánh';
+    }
+    if (!formState.categoryId) {
+      newErrors.categoryId = 'Vui lòng chọn hạng phòng';
     }
     if (!formState.name || formState.name.trim() === '') {
       newErrors.name = 'Vui lòng nhập tên loại phòng';
@@ -214,6 +251,7 @@ export default function RoomTypeForm({
 
     if (isEditMode) {
       const updateData: RoomTypeUpdateRequest = {
+        categoryId: formState.categoryId,
         name: formState.name,
         code: formState.code,
         priceFrom: formState.priceFrom,
@@ -223,12 +261,14 @@ export default function RoomTypeForm({
         sizeM2: formState.sizeM2,
         refundable: formState.refundable,
         amenityIds: formState.amenityIds,
+        imageUrl: formState.imageUrl || undefined,
       };
       console.log('Updating room type with data:', updateData);
       await onSubmit(updateData);
     } else {
       const createData: RoomTypeCreationRequest = {
         branchId: formState.branchId,
+        categoryId: formState.categoryId,
         name: formState.name,
         code: formState.code,
         priceFrom: formState.priceFrom,
@@ -238,6 +278,7 @@ export default function RoomTypeForm({
         sizeM2: formState.sizeM2,
         refundable: formState.refundable,
         amenityIds: formState.amenityIds,
+        imageUrl: formState.imageUrl || undefined,
       };
       console.log('Creating room type with data:', createData);
       await onSubmit(createData);
@@ -313,6 +354,56 @@ export default function RoomTypeForm({
             {errors.branchId && <p className="text-sm text-destructive">{errors.branchId}</p>}
             {isEditMode && (
               <p className="text-sm text-amber-600">Không thể thay đổi chi nhánh khi chỉnh sửa</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Category Section */}
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-purple-50">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-purple-100 text-purple-600">
+              <Sparkles className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Hạng phòng</CardTitle>
+              <CardDescription>Chọn hạng phòng (Standard, Deluxe, Presidential...)</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-muted-foreground" />
+              Hạng phòng <span className="text-destructive">*</span>
+            </Label>
+            <Select
+              disabled={!formState.branchId || isLoadingCategories}
+              value={formState.categoryId}
+              onValueChange={(value) => updateField('categoryId', value)}
+            >
+              <SelectTrigger className={`h-11 max-w-md ${errors.categoryId ? 'border-destructive' : ''}`}>
+                <SelectValue placeholder={
+                  !formState.branchId ? 'Chọn chi nhánh trước' :
+                  isLoadingCategories ? 'Đang tải...' : 
+                  'Chọn hạng phòng'
+                } />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((category) => (
+                  <SelectItem key={category.id} value={category.id}>
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="h-4 w-4 text-muted-foreground" />
+                      {category.name}
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.categoryId && <p className="text-sm text-destructive">{errors.categoryId}</p>}
+            {!formState.branchId && (
+              <p className="text-sm text-amber-600">Vui lòng chọn chi nhánh trước</p>
             )}
           </div>
         </CardContent>
@@ -493,6 +584,43 @@ export default function RoomTypeForm({
               className={`h-11 ${errors.sizeM2 ? 'border-destructive' : ''}`}
             />
             {errors.sizeM2 && <p className="text-sm text-destructive">{errors.sizeM2}</p>}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Image Section */}
+      <Card className="border-0 shadow-lg bg-gradient-to-br from-white to-slate-50">
+        <CardHeader className="pb-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-blue-100 text-blue-600">
+              <ImageIcon className="h-5 w-5" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Ảnh đại diện</CardTitle>
+              <CardDescription>URL ảnh đại diện cho loại phòng</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Label htmlFor="imageUrl">URL ảnh</Label>
+            <Input
+              id="imageUrl"
+              type="url"
+              value={formState.imageUrl}
+              onChange={(e) => updateField('imageUrl', e.target.value)}
+              placeholder="https://..."
+            />
+            {formState.imageUrl && (
+              <div className="mt-2">
+                <img
+                  src={formState.imageUrl}
+                  alt="Preview"
+                  className="w-32 h-32 object-cover rounded-md"
+                  onError={(e) => { e.currentTarget.src = fallbackImage; }}
+                />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
