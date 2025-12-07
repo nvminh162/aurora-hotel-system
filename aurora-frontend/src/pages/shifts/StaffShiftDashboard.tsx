@@ -79,9 +79,13 @@ const StaffShiftDashboard = () => {
           setLocation(`${position.coords.latitude.toFixed(4)}, ${position.coords.longitude.toFixed(4)}`);
         },
         (error) => {
-          console.error('Error getting location:', error);
-          // GPS is optional, use fallback message
+          // Silently handle GPS errors - it's optional
           setLocation('Không có GPS');
+        },
+        {
+          enableHighAccuracy: false,
+          timeout: 5000,
+          maximumAge: 0
         }
       );
     } else {
@@ -186,8 +190,12 @@ const StaffShiftDashboard = () => {
       await dispatch(checkInToShift(currentAssignment.id)).unwrap();
       toast.success('Check-in thành công!');
       
-      // Reload tất cả dữ liệu để cập nhật giao diện
-      await loadAllData();
+      // Chỉ reload shifts và stats, KHÔNG reload check-in status để tránh race condition
+      // Redux state từ checkInToShift.fulfilled đã set isCheckedIn=true
+      loadUpcomingShifts();
+      loadShiftHistory();
+      loadMonthlyCalendar();
+      loadMonthlyStats();
       
       // Thông báo cho user biết dữ liệu đã được cập nhật
       toast.success('Đã cập nhật lịch sử và thống kê', {
@@ -208,8 +216,12 @@ const StaffShiftDashboard = () => {
       await dispatch(checkOutFromShift(currentAssignment.id)).unwrap();
       toast.success('Check-out thành công!');
       
-      // Reload tất cả dữ liệu để cập nhật giao diện
-      await loadAllData();
+      // Chỉ reload shifts và stats, KHÔNG reload check-in status để tránh race condition
+      // Redux state từ checkOutFromShift.fulfilled đã set isCheckedIn=false
+      loadUpcomingShifts();
+      loadShiftHistory();
+      loadMonthlyCalendar();
+      loadMonthlyStats();
       
       // Thông báo cho user biết dữ liệu đã được cập nhật
       toast.success('Đã cập nhật lịch sử và thống kê', {
@@ -551,7 +563,14 @@ const StaffShiftDashboard = () => {
                             <LogIn className="w-5 h-5 mr-2" />
                             Check In Ngay
                           </Button>
-                        ) : !currentCheckIn?.checkOutTime ? (
+                        ) : currentCheckIn?.checkOutTime ? (
+                          <Alert className="flex-1">
+                            <CheckCircle2 className="h-4 w-4" />
+                            <AlertDescription>
+                              Bạn đã hoàn thành ca làm việc này
+                            </AlertDescription>
+                          </Alert>
+                        ) : (
                           <Button
                             onClick={handleCheckOut}
                             disabled={loading}
@@ -562,13 +581,6 @@ const StaffShiftDashboard = () => {
                             <LogOut className="w-5 h-5 mr-2" />
                             Check Out
                           </Button>
-                        ) : (
-                          <Alert className="flex-1">
-                            <CheckCircle2 className="h-4 w-4" />
-                            <AlertDescription>
-                              Bạn đã hoàn thành ca làm việc này
-                            </AlertDescription>
-                          </Alert>
                         )}
                       </div>
 

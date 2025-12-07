@@ -675,7 +675,10 @@ export default function ShiftManagement() {
                 </TabsContent>
                 
                 <TabsContent value="list" className="mt-0">
-                  <AssignmentListView assignments={assignments} />
+                  <AssignmentListView 
+                    assignments={assignments}
+                    onRefresh={loadAssignments}
+                  />
                 </TabsContent>
               </Tabs>
             </CardContent>
