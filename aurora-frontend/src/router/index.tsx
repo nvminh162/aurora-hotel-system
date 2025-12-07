@@ -25,6 +25,7 @@ import ErrorPage from "@/pages/common/ErrorPage";
 import GalleryPage from "@/pages/common/Gallery";
 import HomePage from "@/pages/common/Home";
 import NewsPage from "@/pages/common/News";
+import NewsDetailPage from "@/pages/common/NewsDetail";
 import ServicePage from "@/pages/common/Service";
 import UserProfilePage from "@/pages/common/UserProfile";
 import GuestBranchListPage from "@/pages/common/BranchList";
@@ -122,6 +123,7 @@ const router = createBrowserRouter([
       { path: "rooms/:id", element: <GuestRoomDetailPage /> },
       { path: "gallery", element: <GalleryPage /> },
       { path: "news", element: <NewsPage /> },
+      { path: "news/:slug", element: <NewsDetailPage /> },
       { path: "contact", element: <ContactPage /> },
       { path: "auth", element: <AuthPage /> },
       { path: "payment/return", element: <PaymentReturnPage /> },
