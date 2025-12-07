@@ -7,6 +7,7 @@ import { format } from "date-fns";
 import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";
 import { fetchPublicNewsBySlug, clearCurrentNews } from "@/features/slices/newsSlice";
 import LoadingScreen from "@/components/custom/LoadingScreen";
+import VideoHero from "@/components/custom/VideoHero";
 
 export default function NewsDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -57,15 +58,8 @@ export default function NewsDetailPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header Image */}
-      <div className="relative h-96 w-full overflow-hidden">
-        <img
-          src={currentNews.thumbnailUrl || "/placeholder-news.jpg"}
-          alt={currentNews.title}
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-      </div>
+      {/* Header Video */}
+      <VideoHero height="hero" overlayOpacity={0.5} />
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-32 relative z-10">
