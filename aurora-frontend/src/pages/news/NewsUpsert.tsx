@@ -3,12 +3,18 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as Yup from "yup";
 import { useMyProfile } from "@/hooks/useMyProfile";
+import { useNewsImageUpload } from "@/hooks/useNewsImageUpload";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import slugify from "slugify";
 import throttle from "lodash.throttle";
 import { toast } from "sonner";
-import { getNewsBySlug } from "@/services/newsApi";
+import { 
+  getNewsBySlug, 
+  createNews, 
+  getNewsImages,
+  type CreateNewsRequest 
+} from "@/services/newsApi";
 import type { NewsDetailResponse } from "@/types/news.types";
 import {
   Form,
@@ -68,10 +74,17 @@ export default function NewsUpsertPage() {
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
   const [isLoadingNews, setIsLoadingNews] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [newsData, setNewsData] = useState<NewsDetailResponse | null>(null);
   const [editorContent, setEditorContent] = useState<string>("");
+  const [editorContentJson, setEditorContentJson] = useState<object>({});
+  const [editorKey, setEditorKey] = useState(0);
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isEditMode = !!slug;
+
+  // Initialize image upload hook
+  const imageUpload = useNewsImageUpload();
 
   const form = useForm<NewsFormData>({
     resolver: yupResolver(newsSchema),
@@ -109,6 +122,15 @@ export default function NewsUpsertPage() {
         
         // Set editor content
         setEditorContent(news.contentHtml || "");
+        setEditorKey(prev => prev + 1);
+        
+        // Load existing images
+        try {
+          const imagesResponse = await getNewsImages(news.id);
+          imageUpload.initializeUploadedImages(imagesResponse.result);
+        } catch (error) {
+          console.error("Failed to load images:", error);
+        }
         
         // Mark slug as manually edited to prevent auto-generation
         setIsSlugManuallyEdited(true);
@@ -124,7 +146,8 @@ export default function NewsUpsertPage() {
     };
     
     loadNewsData();
-  }, [slug, form, navigate]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
 
   // Throttled slug generation function
   const generateSlugFromTitle = useCallback(
@@ -166,6 +189,7 @@ export default function NewsUpsertPage() {
   const handleThumbnailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setThumbnailFile(file);
       form.setValue("thumbnail", file);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -175,13 +199,73 @@ export default function NewsUpsertPage() {
     }
   };
 
+  // Handle image upload in editor (creates temp image)
+  const handleEditorImageUpload = useCallback(async (file: File): Promise<string> => {
+    // Create temporary ObjectURL for immediate preview
+    const tempUrl = imageUpload.createTempImage(file);
+    return tempUrl;
+  }, [imageUpload]);
+
   // Handle form submission
-  const onSubmit = (data: NewsFormData) => {
-    console.log("News data:", data);
-    console.log("Editor content:", editorContent);
-    console.log("Is edit mode:", isEditMode);
-    console.log("News ID:", newsData?.id);
-    // TODO: Implement API call to save/update news
+  const onSubmit = async (data: NewsFormData) => {
+    setIsSaving(true);
+    
+    try {
+      // Step 1: Create/Update news to get newsId
+      const newsRequest: CreateNewsRequest = {
+        id: newsData?.id, // Include ID if editing
+        title: data.title,
+        slug: data.slug,
+        description: data.description,
+        thumbnail: thumbnailFile || undefined, // Send File instead of URL
+        contentJson: JSON.stringify(editorContentJson),
+        contentHtml: editorContent,
+        isPublic: data.isPublic,
+      };
+      
+      toast.loading("Đang lưu tin tức...", { id: "save-news" });
+      
+      const newsResponse = await createNews(newsRequest);
+      const savedNews = newsResponse.result;
+      
+      // Step 2: Process images - upload temp images and replace URLs
+      toast.loading("Đang xử lý ảnh...", { id: "save-news" });
+      
+      const processedHtml = await imageUpload.processSave(
+        editorContent,
+        savedNews.id
+      );
+      
+      // Step 3: Update news with processed content (if content changed)
+      if (processedHtml !== editorContent) {
+        const updateRequest: CreateNewsRequest = {
+          id: savedNews.id,
+          title: data.title,
+          slug: data.slug,
+          description: data.description,
+          contentJson: JSON.stringify(editorContentJson),
+          contentHtml: processedHtml,
+          isPublic: data.isPublic,
+          // Don't send thumbnail again in update
+        };
+        
+        await createNews(updateRequest);
+      }
+      
+      toast.success(
+        isEditMode ? "Cập nhật tin tức thành công!" : "Tạo tin tức thành công!",
+        { id: "save-news" }
+      );
+      
+      // Navigate to news list
+      navigate("/admin/news");
+      
+    } catch (error) {
+      console.error("Failed to save news:", error);
+      toast.error("Lỗi khi lưu tin tức", { id: "save-news" });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   if (isLoadingNews) {
@@ -421,12 +505,16 @@ export default function NewsUpsertPage() {
               </CardHeader>
               <CardContent>
                 <SimpleEditor 
-                  key={editorContent} 
+                  key={editorKey} 
                   initialContent={editorContent}
-                  onChange={(html) => {
+                  onChange={(html, json) => {
                     setEditorContent(html);
+                    if (json) {
+                      setEditorContentJson(json);
+                    }
                     form.setValue("content", html);
                   }}
+                  onImageUpload={handleEditorImageUpload}
                 />
               </CardContent>
             </Card>
@@ -437,11 +525,23 @@ export default function NewsUpsertPage() {
                 type="button" 
                 variant="outline"
                 onClick={() => navigate("/admin/news")}
+                disabled={isSaving}
               >
                 Hủy
               </Button>
-              <Button type="submit" variant="default">
-                {isEditMode ? "Cập nhật tin tức" : "Tạo tin tức"}
+              <Button 
+                type="submit" 
+                variant="default"
+                disabled={isSaving}
+              >
+                {isSaving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Đang lưu...
+                  </>
+                ) : (
+                  isEditMode ? "Cập nhật tin tức" : "Tạo tin tức"
+                )}
               </Button>
             </div>
           </form>

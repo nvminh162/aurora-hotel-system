@@ -39,7 +39,7 @@ import { HeadingDropdownMenu } from "@/components/titap/tiptap-ui/heading-dropdo
 import { ImageUploadButton } from "@/components/titap/tiptap-ui/image-upload-button"
 import { ListDropdownMenu } from "@/components/titap/tiptap-ui/list-dropdown-menu"
 import { BlockquoteButton } from "@/components/titap/tiptap-ui/blockquote-button"
-// import { CodeBlockButton } from "@/components/titap/tiptap-ui/code-block-button"
+import { PreviewButton } from "@/components/titap/tiptap-ui/preview-button"
 import {
   ColorHighlightPopover,
   ColorHighlightPopoverContent,
@@ -63,9 +63,6 @@ import { LinkIcon } from "@/components/titap/tiptap-icons/link-icon";
 import { useIsBreakpoint } from "@/hooks/titap/use-is-breakpoint"
 import { useWindowSize } from "@/hooks/titap/use-window-size"
 import { useCursorVisibility } from "@/hooks/titap/use-cursor-visibility"
-
-// --- Components ---
-import { ThemeToggle } from "@/components/titap/tiptap-templates/simple/theme-toggle"
 
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
@@ -148,7 +145,7 @@ const MainToolbarContent = ({
       {isMobile && <ToolbarSeparator />}
 
       <ToolbarGroup>
-        <ThemeToggle />
+        <PreviewButton />
       </ToolbarGroup>
     </>
   )
@@ -185,16 +182,24 @@ const MobileToolbarContent = ({
 
 interface SimpleEditorProps {
   initialContent?: string;
-  onChange?: (html: string) => void;
+  onChange?: (html: string, json?: object) => void;
+  onImageUpload?: (file: File) => Promise<string>;
 }
 
-export function SimpleEditor({ initialContent = "", onChange }: SimpleEditorProps = {}) {
+export function SimpleEditor({ 
+  initialContent = "", 
+  onChange,
+  onImageUpload 
+}: SimpleEditorProps = {}) {
   const isMobile = useIsBreakpoint()
   const { height } = useWindowSize()
   const [mobileView, setMobileView] = useState<"main" | "highlighter" | "link">(
     "main"
   )
   const toolbarRef = useRef<HTMLDivElement>(null)
+
+  // Use custom upload handler if provided, otherwise use default
+  const uploadHandler = onImageUpload || handleImageUpload;
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -229,14 +234,16 @@ export function SimpleEditor({ initialContent = "", onChange }: SimpleEditorProp
         accept: "image/*",
         maxSize: MAX_FILE_SIZE,
         limit: 3,
-        upload: handleImageUpload,
+        upload: uploadHandler,
         onError: (error) => console.error("Upload failed:", error),
       }),
     ],
     content: initialContent || content,
     onUpdate: ({ editor }) => {
       if (onChange) {
-        onChange(editor.getHTML());
+        const html = editor.getHTML();
+        const json = editor.getJSON();
+        onChange(html, json);
       }
     },
   })

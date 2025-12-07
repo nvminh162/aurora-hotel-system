@@ -90,32 +90,31 @@ export default function NewsDetailPage() {
           </div>
 
           {/* Title */}
-          <h1 className="text-4xl font-bold text-foreground mb-6">
+          <h1 className="text-6xl font-bold text-foreground mb-6">
             {currentNews.title}
           </h1>
 
           {/* Meta Information */}
-          <div className="flex flex-wrap gap-6 text-muted-foreground mb-8 pb-8 border-b border-border">
-            <div className="flex items-center gap-2">
-              <CalendarDays className="w-5 h-5" />
-              <span>{formatDate(currentNews.publishedAt)}</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <User className="w-5 h-5" />
-              <span>{currentNews.createdBy}</span>
-            </div>
-          </div>
-
-          {/* Description */}
-          <div className="prose prose-lg max-w-none mb-8">
+          <div className="flex flex-col gap-6 text-muted-foreground mb-8 pb-8 border-b border-border">
+            {/* Description */}
             <p className="text-lg text-foreground leading-relaxed">
               {currentNews.description}
             </p>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <CalendarDays className="w-5 h-5" />
+                <span>{formatDate(currentNews.publishedAt)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <User className="w-5 h-5" />
+                <span>{currentNews.createdBy}</span>
+              </div>
+            </div>
           </div>
 
           {/* Content HTML */}
-          <div 
-            className="prose prose-lg max-w-none"
+          <div
+            className="tiptap-content"
             dangerouslySetInnerHTML={{ __html: currentNews.contentHtml }}
           />
         </div>
@@ -142,7 +141,8 @@ export default function NewsDetailPage() {
                       className="w-full h-48 object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%239ca3af'%3ENo Image%3C/text%3E%3C/svg%3E";
+                        target.src =
+                          "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='300'%3E%3Crect width='400' height='300' fill='%23e5e7eb'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-family='Arial' font-size='18' fill='%239ca3af'%3ENo Image%3C/text%3E%3C/svg%3E";
                       }}
                     />
                     <div className="p-4">

@@ -143,7 +143,7 @@ export default function NewsPreview() {
           </div>
 
           {/* Description */}
-          <div className="prose prose-lg max-w-none mb-8">
+          <div className="mb-8">
             <p className="text-lg text-foreground leading-relaxed">
               {currentNews.description}
             </p>
@@ -163,7 +163,7 @@ export default function NewsPreview() {
           )}
 
           {/* Content would be rendered here if available in the list response */}
-          <div className="prose prose-lg max-w-none">
+          <div className="tiptap-content">
             <Alert>
               <AlertDescription>
                 Nội dung chi tiết chỉ có sẵn trong API chi tiết. Vui lòng chỉnh

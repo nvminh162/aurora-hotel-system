@@ -95,12 +95,15 @@ public class NewsController {
         );
     }
 
-    @PostMapping
+    @PostMapping(consumes = {"multipart/form-data"})
     @RequirePermission(PermissionConstants.Admin.NEWS_CREATE)
-    public ResponseEntity<ApiResponse<NewsResponse>> createNews(@Valid @RequestBody NewsCreationRequest request) {
-        log.info("Request to create news: title={}", request.getTitle());
+    public ResponseEntity<ApiResponse<NewsResponse>> createNews(
+            @Valid @ModelAttribute NewsCreationRequest request,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) {
+        log.info("Request to create news: title={}, hasThumbnail={}", 
+                request.getTitle(), thumbnail != null);
 
-        NewsResponse news = newsService.createNews(request);
+        NewsResponse news = newsService.createNews(request, thumbnail);
 
         return ResponseEntity.ok(
                 ApiResponse.<NewsResponse>builder()
@@ -110,14 +113,15 @@ public class NewsController {
         );
     }
 
-    @PutMapping("/{id}")
+    @PutMapping(value = "/{id}", consumes = {"multipart/form-data"})
     @RequirePermission(PermissionConstants.Admin.NEWS_UPDATE)
     public ResponseEntity<ApiResponse<NewsResponse>> updateNews(
             @PathVariable String id,
-            @Valid @RequestBody NewsUpdateRequest request) {
-        log.info("Request to update news: id={}", id);
+            @Valid @ModelAttribute NewsUpdateRequest request,
+            @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail) {
+        log.info("Request to update news: id={}, hasThumbnail={}", id, thumbnail != null);
 
-        NewsResponse news = newsService.updateNews(id, request);
+        NewsResponse news = newsService.updateNews(id, request, thumbnail);
 
         return ResponseEntity.ok(
                 ApiResponse.<NewsResponse>builder()

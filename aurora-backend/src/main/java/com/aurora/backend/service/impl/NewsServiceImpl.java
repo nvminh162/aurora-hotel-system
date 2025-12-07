@@ -11,14 +11,18 @@ import com.aurora.backend.enums.NewsStatus;
 import com.aurora.backend.exception.AppException;
 import com.aurora.backend.mapper.NewsMapper;
 import com.aurora.backend.repository.NewsRepository;
+import com.aurora.backend.service.CloudinaryService;
 import com.aurora.backend.service.NewsService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -28,6 +32,7 @@ public class NewsServiceImpl implements NewsService {
 
     private final NewsRepository newsRepository;
     private final NewsMapper newsMapper;
+    private final CloudinaryService cloudinaryService;
 
     @Override
     @Transactional(readOnly = true)
@@ -77,10 +82,25 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
-    public NewsResponse createNews(NewsCreationRequest request) {
-        log.info("Creating news: title={}, slug={}, id={}", request.getTitle(), request.getSlug(), request.getId());
+    public NewsResponse createNews(NewsCreationRequest request, MultipartFile thumbnail) {
+        log.info("Creating news: title={}, slug={}, id={}, hasThumbnail={}", 
+                request.getTitle(), request.getSlug(), request.getId(), thumbnail != null);
 
         News news;
+        
+        // Upload thumbnail if provided
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            try {
+                String folder = "news/thumbnails";
+                Map<String, Object> uploadResult = cloudinaryService.uploadFile(thumbnail, folder);
+                String thumbnailUrl = (String) uploadResult.get("secure_url");
+                request.setThumbnailUrl(thumbnailUrl);
+                log.info("Thumbnail uploaded successfully: {}", thumbnailUrl);
+            } catch (IOException e) {
+                log.error("Failed to upload thumbnail", e);
+                throw new AppException(ErrorCode.IMAGE_UPLOAD_FAILED);
+            }
+        }
         
         // If ID is provided, update existing news instead of creating new one
         if (request.getId() != null && !request.getId().isEmpty()) {
@@ -96,7 +116,9 @@ public class NewsServiceImpl implements NewsService {
             news.setTitle(request.getTitle());
             news.setSlug(request.getSlug());
             news.setDescription(request.getDescription());
-            news.setThumbnailUrl(request.getThumbnailUrl());
+            if (request.getThumbnailUrl() != null) {
+                news.setThumbnailUrl(request.getThumbnailUrl());
+            }
             news.setContentJson(request.getContentJson());
             news.setContentHtml(request.getContentHtml());
             if (request.getIsPublic() != null) {
@@ -132,11 +154,25 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
-    public NewsResponse updateNews(String id, NewsUpdateRequest request) {
-        log.info("Updating news: id={}", id);
+    public NewsResponse updateNews(String id, NewsUpdateRequest request, MultipartFile thumbnail) {
+        log.info("Updating news: id={}, hasThumbnail={}", id, thumbnail != null);
 
         News news = newsRepository.findById(id)
                 .orElseThrow(() -> new AppException(ErrorCode.NEWS_NOT_FOUND));
+
+        // Upload thumbnail if provided
+        if (thumbnail != null && !thumbnail.isEmpty()) {
+            try {
+                String folder = "news/thumbnails";
+                Map<String, Object> uploadResult = cloudinaryService.uploadFile(thumbnail, folder);
+                String thumbnailUrl = (String) uploadResult.get("secure_url");
+                request.setThumbnailUrl(thumbnailUrl);
+                log.info("Thumbnail uploaded successfully: {}", thumbnailUrl);
+            } catch (IOException e) {
+                log.error("Failed to upload thumbnail", e);
+                throw new AppException(ErrorCode.IMAGE_UPLOAD_FAILED);
+            }
+        }
 
         // Check slug uniqueness if slug is being updated
         if (request.getSlug() != null && !request.getSlug().equals(news.getSlug())) {

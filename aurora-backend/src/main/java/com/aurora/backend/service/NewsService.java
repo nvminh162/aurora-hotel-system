@@ -5,6 +5,7 @@ import com.aurora.backend.dto.request.NewsUpdateRequest;
 import com.aurora.backend.dto.request.NewsVisibilityRequest;
 import com.aurora.backend.dto.response.NewsListResponse;
 import com.aurora.backend.dto.response.NewsResponse;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -17,9 +18,9 @@ public interface NewsService {
     
     NewsResponse getNewsBySlug(String slug);
     
-    NewsResponse createNews(NewsCreationRequest request);
+    NewsResponse createNews(NewsCreationRequest request, MultipartFile thumbnail);
     
-    NewsResponse updateNews(String id, NewsUpdateRequest request);
+    NewsResponse updateNews(String id, NewsUpdateRequest request, MultipartFile thumbnail);
     
     NewsResponse updateNewsVisibility(String id, NewsVisibilityRequest request);
     

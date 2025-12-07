@@ -1,5 +1,6 @@
 @import './styles/_variables.scss';
 @import './styles/_keyframe-animations.scss';
+@import './styles/tiptap-content.scss';
 
 @import "tailwindcss";
 @import "tw-animate-css";
