@@ -4,7 +4,7 @@ import com.aurora.backend.enums.NewsStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -14,15 +14,15 @@ import java.util.Map;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class NewsResponse {
-    Long id;
+    String id;
     String slug;
     String title;
     Boolean isPublic;
     Map<String, Object> contentJson;
     String contentHtml;
     NewsStatus status;
-    ZonedDateTime publishedAt;
-    ZonedDateTime createdAt;
-    ZonedDateTime updatedAt;
+    LocalDateTime publishedAt;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
     List<ImageAssetResponse> images;
 }

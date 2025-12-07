@@ -3087,7 +3087,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"title\": \"Grand Opening - Aurora Rooftop\",\n  \"summary\": \"Join us for the grand opening of Aurora's rooftop lounge\",\n  \"content\": \"Detailed content of the news article...\",\n  \"slug\": \"grand-opening-rooftop-aurora\",\n  \"isPublic\": true\n}",
+							"raw": "{\n    \"title\": \"Grand Opening - Aurora Rooftop\",\n    \"contentHtml\": \"<h1>Getting started</h1>\",\n    \"contentJson\": {\n        \"type\": \"doc\",\n        \"content\": [\n            {\n                \"type\": \"heading\",\n                \"attrs\": {\n                    \"textAlign\": null,\n                    \"level\": 1\n                },\n                \"content\": [\n                    {\n                        \"type\": \"text\",\n                        \"text\": \"Getting started\"\n                    }\n                ]\n            }\n        ]\n    },\n    \"slug\": \"grand-opening-rooftop-aurora\",\n    \"isPublic\": true\n}",
 							"options": { "raw": { "language": "json" } }
 						},
 						"url": {

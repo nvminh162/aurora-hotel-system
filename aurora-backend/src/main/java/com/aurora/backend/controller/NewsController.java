@@ -1,5 +1,7 @@
 package com.aurora.backend.controller;
 
+import com.aurora.backend.config.annotation.RequirePermission;
+import com.aurora.backend.constant.PermissionConstants;
 import com.aurora.backend.dto.request.NewsCreationRequest;
 import com.aurora.backend.dto.request.NewsUpdateRequest;
 import com.aurora.backend.dto.request.NewsVisibilityRequest;
@@ -63,6 +65,7 @@ public class NewsController {
 
     // Admin endpoints
     @GetMapping
+    @RequirePermission(PermissionConstants.Admin.NEWS_VIEW_ALL)
     public ResponseEntity<ApiResponse<List<NewsResponse>>> getAllNews() {
         log.info("Request to get all news (admin)");
 
@@ -77,6 +80,7 @@ public class NewsController {
     }
 
     @PostMapping
+    @RequirePermission(PermissionConstants.Admin.NEWS_CREATE)
     public ResponseEntity<ApiResponse<NewsResponse>> createNews(@Valid @RequestBody NewsCreationRequest request) {
         log.info("Request to create news: title={}", request.getTitle());
 
@@ -91,8 +95,9 @@ public class NewsController {
     }
 
     @PutMapping("/{id}")
+    @RequirePermission(PermissionConstants.Admin.NEWS_UPDATE)
     public ResponseEntity<ApiResponse<NewsResponse>> updateNews(
-            @PathVariable Long id,
+            @PathVariable String id,
             @Valid @RequestBody NewsUpdateRequest request) {
         log.info("Request to update news: id={}", id);
 
@@ -107,8 +112,9 @@ public class NewsController {
     }
 
     @PatchMapping("/{id}/visibility")
+    @RequirePermission(PermissionConstants.Admin.NEWS_UPDATE)
     public ResponseEntity<ApiResponse<NewsResponse>> updateNewsVisibility(
-            @PathVariable Long id,
+            @PathVariable String id,
             @Valid @RequestBody NewsVisibilityRequest request) {
         log.info("Request to update news visibility: id={}, isPublic={}", id, request.getIsPublic());
 
@@ -123,7 +129,8 @@ public class NewsController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<Void>> deleteNews(@PathVariable Long id) {
+    @RequirePermission(PermissionConstants.Admin.NEWS_DELETE)
+    public ResponseEntity<ApiResponse<Void>> deleteNews(@PathVariable String id) {
         log.info("Request to delete news: id={}", id);
 
         newsService.deleteNews(id);
@@ -137,8 +144,9 @@ public class NewsController {
 
     // Image management endpoints
     @PostMapping("/{newsId}/images")
+    @RequirePermission(PermissionConstants.Admin.NEWS_UPDATE)
     public ResponseEntity<ApiResponse<ImageAssetResponse>> uploadNewsImage(
-            @PathVariable Long newsId,
+            @PathVariable String newsId,
             @RequestPart("file") MultipartFile file) {
         log.info("Request to upload image for news: newsId={}, filename={}", newsId, file.getOriginalFilename());
 
@@ -157,7 +165,8 @@ public class NewsController {
     }
 
     @GetMapping("/{newsId}/images")
-    public ResponseEntity<ApiResponse<List<ImageAssetResponse>>> getNewsImages(@PathVariable Long newsId) {
+    @RequirePermission(PermissionConstants.Admin.NEWS_VIEW_ALL)
+    public ResponseEntity<ApiResponse<List<ImageAssetResponse>>> getNewsImages(@PathVariable String newsId) {
         log.info("Request to get all images for news: newsId={}", newsId);
 
         List<ImageAssetResponse> images = imageAssetService.getNewsImagesByOwnerId(newsId);
@@ -171,7 +180,8 @@ public class NewsController {
     }
 
     @GetMapping("/images/{imageId}")
-    public ResponseEntity<ApiResponse<ImageAssetResponse>> getNewsImage(@PathVariable Long imageId) {
+    @RequirePermission(PermissionConstants.Admin.NEWS_VIEW_ALL)
+    public ResponseEntity<ApiResponse<ImageAssetResponse>> getNewsImage(@PathVariable String imageId) {
         log.info("Request to get news image: imageId={}", imageId);
 
         ImageAssetResponse image = imageAssetService.getNewsImage(imageId);
@@ -185,7 +195,8 @@ public class NewsController {
     }
 
     @DeleteMapping("/{newsId}/images")
-    public ResponseEntity<ApiResponse<Void>> deleteAllNewsImages(@PathVariable Long newsId) {
+    @RequirePermission(PermissionConstants.Admin.NEWS_DELETE)
+    public ResponseEntity<ApiResponse<Void>> deleteAllNewsImages(@PathVariable String newsId) {
         log.info("Request to delete all images for news: newsId={}", newsId);
 
         imageAssetService.deleteAllImagesByOwnerId(newsId);
@@ -198,6 +209,7 @@ public class NewsController {
     }
 
     @DeleteMapping("/images/public/{publicId}")
+    @RequirePermission(PermissionConstants.Admin.NEWS_DELETE)
     public ResponseEntity<ApiResponse<Void>> deleteImageByPublicId(@PathVariable String publicId) {
         log.info("Request to delete image by publicId: {}", publicId);
 

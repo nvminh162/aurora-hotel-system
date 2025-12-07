@@ -33,10 +33,9 @@ public class ImageAssetServiceImpl implements ImageAssetService {
     private final CloudinaryService cloudinaryService;
     private final ImageAssetMapper imageAssetMapper;
 
-    @Override
     @Transactional
     @Async
-    public ImageAssetResponse uploadNewsImage(MultipartFile file, Long newsId, Long uploadedBy) {
+    public ImageAssetResponse uploadNewsImage(MultipartFile file, String newsId, Long uploadedBy) {
         log.info("Uploading image for news: newsId={}, uploadedBy={}, filename={}", 
                 newsId, uploadedBy, file.getOriginalFilename());
 
@@ -57,7 +56,6 @@ public class ImageAssetServiceImpl implements ImageAssetService {
                     .sizeBytes(((Number) uploadResult.get("bytes")).longValue())
                     .mimeType((String) uploadResult.get("format"))
                     .ownerType("news")
-                    .uploadedBy(uploadedBy)
                     .status(ImageStatus.ATTACHED)
                     .news(news)
                     .build();
@@ -76,7 +74,7 @@ public class ImageAssetServiceImpl implements ImageAssetService {
 
     @Override
     @Transactional(readOnly = true)
-    public ImageAssetResponse getNewsImage(Long imageId) {
+    public ImageAssetResponse getNewsImage(String imageId) {
         log.info("Getting news image: imageId={}", imageId);
 
         ImageAsset imageAsset = imageAssetRepository.findById(imageId)
@@ -87,7 +85,7 @@ public class ImageAssetServiceImpl implements ImageAssetService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ImageAssetResponse> getNewsImagesByOwnerId(Long newsId) {
+    public List<ImageAssetResponse> getNewsImagesByOwnerId(String newsId) {
         log.info("Getting all images for news: newsId={}", newsId);
 
         List<ImageAsset> images = imageAssetRepository.findByNewsId(newsId);
@@ -100,7 +98,7 @@ public class ImageAssetServiceImpl implements ImageAssetService {
     @Override
     @Transactional
     @Async
-    public void deleteAllImagesByOwnerId(Long newsId) {
+    public void deleteAllImagesByOwnerId(String newsId) {
         log.info("Deleting all images for news: newsId={}", newsId);
 
         List<ImageAsset> images = imageAssetRepository.findByNewsId(newsId);

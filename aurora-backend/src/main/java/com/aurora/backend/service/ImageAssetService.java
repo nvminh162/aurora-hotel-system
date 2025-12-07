@@ -6,13 +6,13 @@ import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface ImageAssetService {
-    ImageAssetResponse uploadNewsImage(MultipartFile file, Long newsId, Long uploadedBy);
+    ImageAssetResponse uploadNewsImage(MultipartFile file, String newsId, Long uploadedBy);
     
-    ImageAssetResponse getNewsImage(Long imageId);
+    ImageAssetResponse getNewsImage(String imageId);
     
-    List<ImageAssetResponse> getNewsImagesByOwnerId(Long newsId);
+    List<ImageAssetResponse> getNewsImagesByOwnerId(String newsId);
     
-    void deleteAllImagesByOwnerId(Long newsId);
+    void deleteAllImagesByOwnerId(String newsId);
     
     void deleteImageByPublicId(String publicId);
 }

@@ -11,12 +11,12 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ImageAssetRepository extends JpaRepository<ImageAsset, Long> {
-    List<ImageAsset> findByNewsId(Long newsId);
+public interface ImageAssetRepository extends JpaRepository<ImageAsset, String> {
+    List<ImageAsset> findByNewsId(String newsId);
     
     Optional<ImageAsset> findByPublicId(String publicId);
     
     @Modifying
     @Query("DELETE FROM ImageAsset i WHERE i.news.id = :newsId")
-    void deleteByNewsId(@Param("newsId") Long newsId);
+    void deleteByNewsId(@Param("newsId") String newsId);
 }

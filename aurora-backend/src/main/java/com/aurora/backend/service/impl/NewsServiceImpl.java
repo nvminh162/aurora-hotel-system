@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -78,7 +78,7 @@ public class NewsServiceImpl implements NewsService {
         
         // Set publishedAt if isPublic is true
         if (Boolean.TRUE.equals(request.getIsPublic())) {
-            news.setPublishedAt(ZonedDateTime.now());
+            news.setPublishedAt(LocalDateTime.now());
             news.setStatus(NewsStatus.PUBLISHED);
         }
 
@@ -90,7 +90,7 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
-    public NewsResponse updateNews(Long id, NewsUpdateRequest request) {
+    public NewsResponse updateNews(String id, NewsUpdateRequest request) {
         log.info("Updating news: id={}", id);
 
         News news = newsRepository.findById(id)
@@ -106,9 +106,9 @@ public class NewsServiceImpl implements NewsService {
         newsMapper.updateNewsFromRequest(request, news);
         
         // Update publishedAt if isPublic is being set to true and not yet published
-        if (request.getIsPublic() != null && Boolean.TRUE.equals(request.getIsPublic()) 
+        if (request.getIsPublic() != null && request.getIsPublic()
                 && news.getPublishedAt() == null) {
-            news.setPublishedAt(ZonedDateTime.now());
+            news.setPublishedAt(LocalDateTime.now());
             news.setStatus(NewsStatus.PUBLISHED);
         }
 
@@ -120,7 +120,7 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
-    public NewsResponse updateNewsVisibility(Long id, NewsVisibilityRequest request) {
+    public NewsResponse updateNewsVisibility(String id, NewsVisibilityRequest request) {
         log.info("Updating news visibility: id={}, isPublic={}", id, request.getIsPublic());
 
         News news = newsRepository.findById(id)
@@ -131,7 +131,7 @@ public class NewsServiceImpl implements NewsService {
         // Update status and publishedAt based on visibility
         if (Boolean.TRUE.equals(request.getIsPublic())) {
             if (news.getPublishedAt() == null) {
-                news.setPublishedAt(ZonedDateTime.now());
+                news.setPublishedAt(LocalDateTime.now());
             }
             news.setStatus(NewsStatus.PUBLISHED);
         } else {
@@ -146,7 +146,7 @@ public class NewsServiceImpl implements NewsService {
 
     @Override
     @Transactional
-    public void deleteNews(Long id) {
+    public void deleteNews(String id) {
         log.info("Deleting news: id={}", id);
 
         News news = newsRepository.findById(id)

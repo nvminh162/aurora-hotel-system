@@ -4,7 +4,7 @@ import com.aurora.backend.enums.ImageStatus;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.ZonedDateTime;
+import java.time.LocalDateTime;
 
 @Data
 @NoArgsConstructor
@@ -12,7 +12,7 @@ import java.time.ZonedDateTime;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class ImageAssetResponse {
-    Long id;
+    String id;
     String publicId;
     String url;
     Integer width;
@@ -24,6 +24,6 @@ public class ImageAssetResponse {
     String usagePath;
     ImageStatus status;
     Long uploadedBy;
-    ZonedDateTime createdAt;
-    ZonedDateTime updatedAt;
+    LocalDateTime createdAt;
+    LocalDateTime updatedAt;
 }

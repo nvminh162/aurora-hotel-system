@@ -16,9 +16,9 @@ public interface NewsService {
     
     NewsResponse createNews(NewsCreationRequest request);
     
-    NewsResponse updateNews(Long id, NewsUpdateRequest request);
+    NewsResponse updateNews(String id, NewsUpdateRequest request);
     
-    NewsResponse updateNewsVisibility(Long id, NewsVisibilityRequest request);
+    NewsResponse updateNewsVisibility(String id, NewsVisibilityRequest request);
     
-    void deleteNews(Long id);
+    void deleteNews(String id);
 }
