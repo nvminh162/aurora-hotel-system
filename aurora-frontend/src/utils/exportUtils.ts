@@ -1,12 +1,29 @@
 /**
- * Export Utilities for Reports
- * Provides functions to export data to PDF, Excel, and CSV formats
+ * Enhanced Export Utilities for Reports
+ * Uses jsPDF, html2canvas, exceljs, and file-saver for professional exports
+ */
+
+/**
+ * Enhanced Export Utilities for Reports
+ * Uses jsPDF with Vietnamese font support, html2canvas, exceljs, and file-saver
  */
 
 import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import * as XLSX from 'xlsx';
+import html2canvas from 'html2canvas';
+import ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
+import 'jspdf-autotable';
+import auroraLogo from '@/assets/images/commons/aurora-logo.png';
+// =====================
+// Vietnamese Font Support
+// =====================
+
+import {
+  createVietnamesePDF,
+  setBoldFont,
+  setRegularFont,
+  setItalicFont,
+} from '../font/font-loader';
 
 // =====================
 // Types
@@ -107,171 +124,356 @@ const getCellValue = (row: Record<string, unknown>, column: ExportColumn): strin
   return String(value);
 };
 
-// =====================
-// PDF Export
-// =====================
-
 /**
- * Convert Vietnamese text to ASCII for PDF (workaround for font issues)
- * This removes diacritics but keeps the text readable
+ * Capture chart as image using html2canvas
  */
-const removeVietnameseDiacritics = (str: string): string => {
-  return str
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/đ/g, 'd')
-    .replace(/Đ/g, 'D');
+const captureChart = async (element: HTMLElement): Promise<string> => {
+  try {
+    const canvas = await html2canvas(element, {
+      backgroundColor: '#ffffff',
+      scale: 2, // Higher quality
+      logging: false,
+      useCORS: true,
+      allowTaint: true,
+      removeContainer: true,
+    });
+    return canvas.toDataURL('image/png');
+  } catch (error) {
+    console.error('Failed to capture chart:', error);
+    return '';
+  }
 };
 
 /**
- * Export report data to PDF using jsPDF with autoTable
+ * Capture multiple chart elements
+ */
+const captureCharts = async (chartRefs: HTMLElement[]): Promise<string[]> => {
+  const promises = chartRefs.map(ref => captureChart(ref));
+  return Promise.all(promises);
+};
+
+//=== Logo==//
+const loadLogo = (): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    // Đường dẫn đến file logo trong thư mục public
+    img.src = auroraLogo;
+    img.onload = () => resolve(img);
+    img.onerror = (err) => reject(err);
+  });
+};
+// =====================
+// PDF Export with Clean, Professional Design
+// =====================
+
+/**
+ * Export report data to PDF with clean, professional design
  */
 export const exportToPDF = async (data: ReportExportData): Promise<void> => {
-  const { options, tables, summary } = data;
+  const { options, tables, summary, charts } = data;
   const orientation = options.orientation || 'portrait';
-  
+
   // Create PDF document
-  const doc = new jsPDF({
+  const doc = createVietnamesePDF({
     orientation,
     unit: 'mm',
     format: 'a4',
   });
+  setRegularFont(doc);
 
   const pageWidth = doc.internal.pageSize.getWidth();
-  const margin = 15;
-  let yPosition = 20;
+  const pageHeight = doc.internal.pageSize.getHeight();
+  const margin = 20;
+  let yPosition = 25;
+  let logoImg: HTMLImageElement | null = null;
 
-  // Helper to convert text for PDF
-  const t = (text: string) => removeVietnameseDiacritics(text);
+  // Color palette - Professional and minimal
+  const colors = {
+    primary: [51, 51, 51],        // Dark gray for text
+    secondary: [102, 102, 102],   // Medium gray
+    accent: [200, 200, 200],      // Light gray for borders
+    background: [250, 250, 250],  // Very light gray
+    header: [240, 240, 240],      // Light gray for headers
+  };
 
-  // Header - Title
-  doc.setFontSize(20);
-  doc.setFont('helvetica', 'bold');
-  doc.text(t(options.title || 'Bao cao'), pageWidth / 2, yPosition, { align: 'center' });
-  yPosition += 10;
+  // Helper function to add new page if needed
+  const checkPageBreak = async (requiredSpace: number) => {
+    if (yPosition + requiredSpace > pageHeight - 25) {
+      doc.addPage();
+      setRegularFont(doc); // Re-apply font on new page
+      yPosition = 25;
+      return true;
+    }
+    return false;
+  };
 
-  // Subtitle
+  // ===== HEADER SECTION - Minimal & Clean =====
+  // Load logo
+  const logoWidth = 30;
+  let logoHeight = 0;
+  const headerStartY = yPosition;
+
+
+  try {
+    logoImg = await loadLogo();
+    logoHeight = (logoImg.height * logoWidth) / logoImg.width;
+    const logoX = pageWidth - margin - logoWidth;
+    doc.addImage(logoImg, 'PNG', logoX, headerStartY, logoWidth, logoHeight);
+  } catch (error) {
+    console.warn("Không tải được logo:", error);
+    logoHeight = 15;
+  }
+  doc.setFontSize(22);
+  doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+  setBoldFont(doc);
+  const textY = headerStartY + (logoHeight / 2) + 2.5;
+
+  doc.text(options.title || 'Báo cáo', margin, textY);
+  yPosition = headerStartY + logoHeight + 10;
+
+  // Thin line under title
+  doc.setDrawColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+  doc.setLineWidth(0.5);
+  doc.line(margin, yPosition, pageWidth - margin, yPosition);
+
+  // Tăng yPosition để bắt đầu phần Subtitle
+  yPosition += 8;
+
+  // Subtitle and metadata
+  doc.setFontSize(9);
+  doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+  setRegularFont(doc);
+
   if (options.subtitle) {
-    doc.setFontSize(12);
-    doc.setFont('helvetica', 'normal');
-    doc.text(t(options.subtitle), pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 8;
+    doc.text(options.subtitle, margin, yPosition);
+    yPosition += 5;
   }
 
   // Date range
   if (options.dateRange && (options.dateRange.from || options.dateRange.to)) {
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'italic');
-    const dateText = `Thoi gian: ${formatDate(options.dateRange.from)} - ${formatDate(options.dateRange.to)}`;
-    doc.text(t(dateText), pageWidth / 2, yPosition, { align: 'center' });
-    yPosition += 8;
+    const dateText = `Thời gian: ${formatDate(options.dateRange.from)} - ${formatDate(options.dateRange.to)}`;
+    doc.text(dateText, margin, yPosition);
+    yPosition += 5;
   }
 
   // Generated timestamp
-  doc.setFontSize(8);
-  doc.setFont('helvetica', 'normal');
-  doc.setTextColor(128, 128, 128);
-  doc.text(t(`Tao luc: ${formatDateTime(options.generatedAt || new Date())}`), pageWidth / 2, yPosition, { align: 'center' });
-  doc.setTextColor(0, 0, 0);
+  doc.text(`Tạo lúc: ${formatDateTime(options.generatedAt || new Date())}`, margin, yPosition);
   yPosition += 12;
 
-  // Summary section
+  // ===== SUMMARY SECTION - Clean Cards =====
   if (summary && summary.length > 0) {
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text(t('Tong quan'), margin, yPosition);
+    await checkPageBreak(45);
+
+    doc.setFontSize(12);
+    setBoldFont(doc);
+    doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+    doc.text('Tổng quan', margin, yPosition);
     yPosition += 8;
 
-    // Draw summary boxes
-    const boxWidth = (pageWidth - margin * 2) / Math.min(summary.length, 4);
-    const boxHeight = 20;
-    
-    summary.forEach((item, index) => {
-      const xPos = margin + (index % 4) * boxWidth;
-      const yPos = yPosition + Math.floor(index / 4) * (boxHeight + 5);
-      
-      // Box background
-      doc.setFillColor(249, 250, 251);
-      doc.roundedRect(xPos, yPos, boxWidth - 5, boxHeight, 2, 2, 'F');
-      
+    const cardWidth = (pageWidth - margin * 2 - 9) / 4;
+    const cardHeight = 24;
+
+    summary.slice(0, 4).forEach((item, index) => {
+      const xPos = margin + index * (cardWidth + 3);
+
+      // Card border
+      doc.setDrawColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+      doc.setLineWidth(0.3);
+      doc.rect(xPos, yPosition, cardWidth, cardHeight);
+
+      // Card background - subtle
+      doc.setFillColor(colors.background[0], colors.background[1], colors.background[2]);
+      doc.rect(xPos, yPosition, cardWidth, cardHeight, 'F');
+
+      // Redraw border on top
+      doc.setDrawColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+      doc.rect(xPos, yPosition, cardWidth, cardHeight);
+
       // Label
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(107, 114, 128);
-      doc.text(t(item.label), xPos + 3, yPos + 7);
-      
+      doc.setFontSize(7.5);
+      setRegularFont(doc);
+      doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
+      doc.text(item.label, xPos + 3, yPosition + 6, { maxWidth: cardWidth - 6 });
+
       // Value
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(0, 0, 0);
-      doc.text(t(String(item.value)), xPos + 3, yPos + 15);
+      doc.setFontSize(11);
+      setBoldFont(doc);
+      doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+      const valueText = String(item.value);
+      doc.text(valueText, xPos + 3, yPosition + 16, { maxWidth: cardWidth - 6 });
     });
-    
-    yPosition += Math.ceil(summary.length / 4) * (boxHeight + 5) + 10;
+
+    yPosition += cardHeight + 12;
   }
 
-  // Tables
-  if (tables && tables.length > 0) {
-    for (const table of tables) {
-      // Prepare table data
-      const headers = table.columns.map(col => t(col.header));
-      const body = table.data.map(row => 
-        table.columns.map(col => t(getCellValue(row, col)))
-      );
+  // ===== CHARTS SECTION =====
+  if (charts && charts.length > 0) {
+    for (const chart of charts) {
+      if (chart.chartRef) {
+        await checkPageBreak(100);
 
-      // Add table using autoTable
-      autoTable(doc, {
-        startY: yPosition,
-        head: [headers],
-        body: body,
-        theme: 'striped',
-        headStyles: {
-          fillColor: [245, 158, 11], // Amber color
-          textColor: [255, 255, 255],
-          fontStyle: 'bold',
-          fontSize: 10,
-        },
-        bodyStyles: {
-          fontSize: 9,
-        },
-        alternateRowStyles: {
-          fillColor: [249, 250, 251],
-        },
-        margin: { left: margin, right: margin },
-        styles: {
-          cellPadding: 3,
-          overflow: 'linebreak',
-        },
-        columnStyles: table.columns.reduce((acc, col, index) => {
-          if (col.width) {
-            acc[index] = { cellWidth: col.width };
-          }
-          return acc;
-        }, {} as Record<number, { cellWidth: number }>),
-      });
+        // Chart title
+        doc.setFontSize(11);
+        setBoldFont(doc);
+        doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+        doc.text(chart.chartTitle, margin, yPosition);
+        yPosition += 7;
 
-      // Update yPosition after table
-      yPosition = (doc as jsPDF & { lastAutoTable: { finalY: number } }).lastAutoTable.finalY + 15;
+        // Capture and add chart
+        const chartImage = await captureChart(chart.chartRef);
+        if (chartImage) {
+          const chartWidth = pageWidth - margin * 2;
+          const chartHeight = 90;
+
+          // Border around chart
+          doc.setDrawColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+          doc.setLineWidth(0.3);
+          doc.rect(margin, yPosition, chartWidth, chartHeight);
+
+          doc.addImage(chartImage, 'PNG', margin, yPosition, chartWidth, chartHeight);
+          yPosition += chartHeight + 10;
+        }
+      }
     }
   }
 
-  // Footer
+  // ===== TABLES SECTION - Clean & Professional =====
+  if (tables && tables.length > 0) {
+    for (let tableIndex = 0; tableIndex < tables.length; tableIndex++) {
+      const table = tables[tableIndex];
+      await checkPageBreak(50);
+
+      // Table title
+      doc.setFontSize(11);
+      setBoldFont(doc);
+      doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+      doc.text(`Dữ liệu ${tableIndex + 1}`, margin, yPosition);
+      yPosition += 8;
+
+      // Calculate column widths
+      const availableWidth = pageWidth - margin * 2;
+      const totalWidth = table.columns.reduce((sum, col) => sum + (col.width || 20), 0);
+      const columnWidths = table.columns.map(col =>
+        ((col.width || 20) / totalWidth) * availableWidth
+      );
+
+      // Draw table header
+      doc.setFillColor(colors.header[0], colors.header[1], colors.header[2]);
+      doc.rect(margin, yPosition, availableWidth, 9, 'F');
+
+      // Header border
+      doc.setDrawColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+      doc.setLineWidth(0.3);
+      doc.rect(margin, yPosition, availableWidth, 9);
+
+      doc.setFontSize(8.5);
+      setBoldFont(doc);
+      doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+
+      let xPos = margin;
+      table.columns.forEach((col, i) => {
+        doc.text(col.header, xPos + 2.5, yPosition + 6, { maxWidth: columnWidths[i] - 5 });
+        xPos += columnWidths[i];
+      });
+
+      yPosition += 9;
+
+      // Draw table rows
+      setRegularFont(doc);
+      doc.setFontSize(8);
+
+      for (let rowIndex = 0; rowIndex < table.data.length; rowIndex++) {
+        const row = table.data[rowIndex];
+        await checkPageBreak(7.5);
+
+        // Alternate row colors - very subtle
+        if (rowIndex % 2 === 0) {
+          doc.setFillColor(colors.background[0], colors.background[1], colors.background[2]);
+          doc.rect(margin, yPosition, availableWidth, 7.5, 'F');
+        }
+
+        // Row border
+        doc.setDrawColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+        doc.setLineWidth(0.1);
+        doc.line(margin, yPosition + 7.5, pageWidth - margin, yPosition + 7.5);
+
+        doc.setTextColor(colors.primary[0], colors.primary[1], colors.primary[2]);
+        xPos = margin;
+        table.columns.forEach((col, i) => {
+          const value = getCellValue(row, col);
+          doc.text(value, xPos + 2.5, yPosition + 5, { maxWidth: columnWidths[i] - 5 });
+          xPos += columnWidths[i];
+        });
+
+        yPosition += 7.5;
+      }
+
+      yPosition += 10;
+    }
+  }
+
+  // ===== WATERMARK CHO TẤT CẢ CÁC TRANG =====
+  if (logoImg) {
+    // Ép kiểu lại một lần nữa để chắc chắn nó là ảnh
+    const img = logoImg as HTMLImageElement;
+
+    const totalPages = doc.getNumberOfPages();
+    const wmWidth = 100;
+    const wmHeight = (img.height * wmWidth) / img.width; 
+
+    const wmX = (pageWidth - wmWidth) / 2;
+    const wmY = (pageHeight - wmHeight) / 2;
+
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+
+      // 1. Lưu trạng thái
+      doc.saveGraphicsState();
+
+      // 2. Set độ mờ (Dùng 'as any' để sửa lỗi GState đỏ)
+      try {
+        // @ts-ignore
+        const gState = new doc.GState({ opacity: 0.1 });
+        doc.setGState(gState);
+      } catch (e) {
+        // Fallback nếu GState lỗi (hiếm gặp)
+        console.warn("GState không hỗ trợ", e);
+      }
+
+      // 3. Vẽ logo
+      doc.addImage(img, 'PNG', wmX, wmY, wmWidth, wmHeight);
+
+      // 4. Khôi phục
+      doc.restoreGraphicsState();
+    }
+  }
+  // ===== FOOTER ON ALL PAGES - Minimal =====
   const pageCount = doc.getNumberOfPages();
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
+    setRegularFont(doc); // Re-apply font for footer
+
+    // Top border line
+    doc.setDrawColor(colors.accent[0], colors.accent[1], colors.accent[2]);
+    doc.setLineWidth(0.3);
+    doc.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12);
+
+    // Page number
     doc.setFontSize(8);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(128, 128, 128);
+    setItalicFont(doc);
+    doc.setTextColor(colors.secondary[0], colors.secondary[1], colors.secondary[2]);
     doc.text(
       `Trang ${i}/${pageCount}`,
       pageWidth / 2,
-      doc.internal.pageSize.getHeight() - 10,
+      pageHeight - 7,
       { align: 'center' }
     );
+
+    // System name
     doc.text(
       'Aurora Hotel Management System',
       pageWidth - margin,
-      doc.internal.pageSize.getHeight() - 10,
+      pageHeight - 7,
       { align: 'right' }
     );
   }
@@ -281,74 +483,216 @@ export const exportToPDF = async (data: ReportExportData): Promise<void> => {
 };
 
 // =====================
-// Excel Export
+// Excel Export with Clean, Professional Styling
 // =====================
 
 /**
- * Export report data to Excel
+ * Export report data to Excel with professional styling
  */
 export const exportToExcel = async (data: ReportExportData): Promise<void> => {
   const { options, tables, summary } = data;
-  
-  // Create workbook
-  const workbook = XLSX.utils.book_new();
 
-  // Summary sheet if exists
+  // Create workbook
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = 'Aurora Hotel Management System';
+  workbook.created = new Date();
+
+  // Professional color scheme
+  const colors = {
+    headerBg: 'FFF5F5F5',
+    headerText: 'FF333333',
+    altRowBg: 'FFFAFAFA',
+    borderColor: 'FFE0E0E0',
+    accentText: 'FF666666',
+  };
+
+  // ===== SUMMARY SHEET =====
   if (summary && summary.length > 0) {
-    const summaryData = [
-      [options.title || 'Báo cáo'],
-      [options.subtitle || ''],
-      [`Thời gian: ${formatDate(options.dateRange?.from || null)} - ${formatDate(options.dateRange?.to || null)}`],
-      [`Tạo lúc: ${formatDateTime(options.generatedAt || new Date())}`],
-      [],
-      ['Tổng quan'],
-      ...summary.map(item => [item.label, String(item.value)]),
+    const summarySheet = workbook.addWorksheet('Tổng quan', {
+      properties: { tabColor: { argb: 'FF999999' } }
+    });
+
+    // Set column widths
+    summarySheet.columns = [
+      { width: 35 },
+      { width: 25 },
     ];
 
-    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
-    
-    // Styling for summary sheet
-    summarySheet['!cols'] = [{ wch: 30 }, { wch: 20 }];
-    
-    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Tổng quan');
+    // Title row
+    const titleRow = summarySheet.addRow([options.title || 'Báo cáo']);
+    titleRow.font = { size: 18, bold: true, color: { argb: 'FF333333' } };
+    titleRow.height = 28;
+    summarySheet.mergeCells('A1:B1');
+    titleRow.alignment = { vertical: 'middle', horizontal: 'left' };
+
+    // Subtitle row
+    if (options.subtitle) {
+      const subtitleRow = summarySheet.addRow([options.subtitle]);
+      subtitleRow.font = { size: 10, color: { argb: colors.accentText } };
+      subtitleRow.height = 18;
+      summarySheet.mergeCells('A2:B2');
+      subtitleRow.alignment = { vertical: 'middle', horizontal: 'left' };
+    }
+
+    // Date range row
+    if (options.dateRange && (options.dateRange.from || options.dateRange.to)) {
+      const dateRow = summarySheet.addRow([
+        `Thời gian: ${formatDate(options.dateRange.from)} - ${formatDate(options.dateRange.to)}`
+      ]);
+      dateRow.font = { size: 9, color: { argb: colors.accentText } };
+      dateRow.height = 16;
+      summarySheet.mergeCells(`A${dateRow.number}:B${dateRow.number}`);
+      dateRow.alignment = { vertical: 'middle', horizontal: 'left' };
+    }
+
+    // Generated timestamp
+    const timestampRow = summarySheet.addRow([
+      `Tạo lúc: ${formatDateTime(options.generatedAt || new Date())}`
+    ]);
+    timestampRow.font = { size: 9, color: { argb: colors.accentText } };
+    timestampRow.height = 16;
+    summarySheet.mergeCells(`A${timestampRow.number}:B${timestampRow.number}`);
+    timestampRow.alignment = { vertical: 'middle', horizontal: 'left' };
+
+    // Empty row
+    summarySheet.addRow([]);
+
+    // Summary section header
+    const summaryHeaderRow = summarySheet.addRow(['Chỉ tiêu chính']);
+    summaryHeaderRow.font = { size: 12, bold: true, color: { argb: colors.headerText } };
+    summaryHeaderRow.height = 22;
+    summarySheet.mergeCells(`A${summaryHeaderRow.number}:B${summaryHeaderRow.number}`);
+    summaryHeaderRow.alignment = { vertical: 'middle', horizontal: 'left' };
+    summaryHeaderRow.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: colors.headerBg }
+    };
+
+    // Summary data
+    summary.forEach((item, index) => {
+      const row = summarySheet.addRow([item.label, String(item.value)]);
+      row.height = 20;
+
+      // Styling
+      row.getCell(1).font = { size: 10, color: { argb: colors.accentText } };
+      row.getCell(2).font = { size: 11, bold: true, color: { argb: colors.headerText } };
+      row.getCell(2).alignment = { horizontal: 'right', vertical: 'middle' };
+
+      // Alternate row colors
+      if (index % 2 === 0) {
+        row.fill = {
+          type: 'pattern',
+          pattern: 'solid',
+          fgColor: { argb: colors.altRowBg }
+        };
+      }
+
+      // Thin borders
+      row.eachCell((cell) => {
+        cell.border = {
+          bottom: { style: 'thin', color: { argb: colors.borderColor } }
+        };
+      });
+    });
   }
 
-  // Data sheets
+  // ===== DATA SHEETS =====
   if (tables && tables.length > 0) {
-    tables.forEach((table, index) => {
-      // Prepare data with headers
-      const sheetData = [
-        table.columns.map(col => col.header),
-        ...table.data.map(row => 
+    tables.forEach((table, tableIndex) => {
+      const sheetName = `Dữ liệu ${tableIndex + 1}`;
+      const worksheet = workbook.addWorksheet(sheetName, {
+        properties: { tabColor: { argb: 'FF999999' } }
+      });
+
+      // Set column widths
+      worksheet.columns = table.columns.map(col => ({
+        width: col.width || 15,
+      }));
+
+      // Add header row - Clean style
+      const headerRow = worksheet.addRow(table.columns.map(col => col.header));
+      headerRow.height = 22;
+      headerRow.font = { size: 10, bold: true, color: { argb: colors.headerText } };
+      headerRow.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: colors.headerBg }
+      };
+      headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
+
+      // Clean header borders
+      headerRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: colors.borderColor } },
+          left: { style: 'thin', color: { argb: colors.borderColor } },
+          bottom: { style: 'medium', color: { argb: colors.borderColor } },
+          right: { style: 'thin', color: { argb: colors.borderColor } }
+        };
+      });
+
+      // Add data rows
+      table.data.forEach((row, rowIndex) => {
+        const dataRow = worksheet.addRow(
           table.columns.map(col => {
             const value = row[col.key];
             if (col.format) return col.format(value);
             return value;
           })
-        ),
+        );
+
+        dataRow.height = 18;
+        dataRow.font = { size: 9.5 };
+
+        // Alternate row colors - subtle
+        if (rowIndex % 2 === 0) {
+          dataRow.fill = {
+            type: 'pattern',
+            pattern: 'solid',
+            fgColor: { argb: colors.altRowBg }
+          };
+        }
+
+        // Alignment
+        dataRow.eachCell((cell, colIndex) => {
+          const column = table.columns[colIndex - 1];
+
+          // Right align numbers and currency
+          if (column.format || typeof row[column.key] === 'number') {
+            cell.alignment = { horizontal: 'right', vertical: 'middle' };
+          } else {
+            cell.alignment = { horizontal: 'left', vertical: 'middle' };
+          }
+
+          // Thin borders
+          cell.border = {
+            top: { style: 'thin', color: { argb: colors.borderColor } },
+            left: { style: 'thin', color: { argb: colors.borderColor } },
+            bottom: { style: 'thin', color: { argb: colors.borderColor } },
+            right: { style: 'thin', color: { argb: colors.borderColor } }
+          };
+        });
+      });
+
+      // Auto-filter
+      worksheet.autoFilter = {
+        from: { row: 1, column: 1 },
+        to: { row: 1, column: table.columns.length }
+      };
+
+      // Freeze header row
+      worksheet.views = [
+        { state: 'frozen', xSplit: 0, ySplit: 1 }
       ];
-
-      const sheet = XLSX.utils.aoa_to_sheet(sheetData);
-
-      // Set column widths
-      sheet['!cols'] = table.columns.map(col => ({
-        wch: col.width || 15,
-      }));
-
-      XLSX.utils.book_append_sheet(
-        workbook, 
-        sheet, 
-        `Dữ liệu ${index + 1}`.substring(0, 31) // Sheet name max 31 chars
-      );
     });
   }
 
   // Generate Excel file
-  const excelBuffer = XLSX.write(workbook, { bookType: 'xlsx', type: 'array' });
-  const blob = new Blob([excelBuffer], { 
-    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+  const buffer = await workbook.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
   });
-  
+
   saveAs(blob, `${options.filename}.xlsx`);
 };
 
@@ -361,17 +705,17 @@ export const exportToExcel = async (data: ReportExportData): Promise<void> => {
  */
 export const exportToCSV = async (data: ReportExportData): Promise<void> => {
   const { options, tables } = data;
-  
+
   if (!tables || tables.length === 0) {
     throw new Error('No table data to export');
   }
 
   // Use first table for CSV
   const table = tables[0];
-  
+
   // Create CSV content
   const headers = table.columns.map(col => col.header).join(',');
-  const rows = table.data.map(row => 
+  const rows = table.data.map(row =>
     table.columns.map(col => {
       const value = getCellValue(row, col);
       // Escape quotes and wrap in quotes if contains comma
@@ -383,11 +727,11 @@ export const exportToCSV = async (data: ReportExportData): Promise<void> => {
   );
 
   const csvContent = [headers, ...rows].join('\n');
-  
+
   // Add BOM for UTF-8
   const BOM = '\uFEFF';
   const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8' });
-  
+
   saveAs(blob, `${options.filename}.csv`);
 };
 
@@ -396,7 +740,7 @@ export const exportToCSV = async (data: ReportExportData): Promise<void> => {
 // =====================
 
 /**
- * Export Overview Report
+ * Export Overview Report with Charts
  */
 export interface OverviewExportData {
   dateRange: { from: string | null; to: string | null };
@@ -408,6 +752,12 @@ export interface OverviewExportData {
   };
   revenueByMonth?: { period: string; revenue: number; bookings: number }[];
   topRoomTypes?: { name: string; bookings: number; revenue?: number }[];
+  chartRefs?: {
+    revenueChart?: HTMLElement | null;
+    paymentMethodChart?: HTMLElement | null;
+    bookingSourceChart?: HTMLElement | null;
+    topRoomTypesChart?: HTMLElement | null;
+  };
 }
 
 export const exportOverviewReport = async (
@@ -430,7 +780,36 @@ export const exportOverviewReport = async (
       { label: 'Công suất', value: `${data.overview.occupancyRate.toFixed(1)}%` },
     ],
     tables: [],
+    charts: [],
   };
+
+  // Add charts if refs are provided
+  if (data.chartRefs) {
+    if (data.chartRefs.revenueChart) {
+      exportData.charts!.push({
+        chartTitle: 'Biểu đồ Doanh thu',
+        chartRef: data.chartRefs.revenueChart,
+      });
+    }
+    if (data.chartRefs.paymentMethodChart) {
+      exportData.charts!.push({
+        chartTitle: 'Phương thức Thanh toán',
+        chartRef: data.chartRefs.paymentMethodChart,
+      });
+    }
+    if (data.chartRefs.bookingSourceChart) {
+      exportData.charts!.push({
+        chartTitle: 'Nguồn Đặt phòng',
+        chartRef: data.chartRefs.bookingSourceChart,
+      });
+    }
+    if (data.chartRefs.topRoomTypesChart) {
+      exportData.charts!.push({
+        chartTitle: 'Loại phòng Phổ biến',
+        chartRef: data.chartRefs.topRoomTypesChart,
+      });
+    }
+  }
 
   // Revenue by month table
   if (data.revenueByMonth && data.revenueByMonth.length > 0) {
@@ -561,10 +940,10 @@ export interface OccupancyExportData {
   occupancyRate: number;
   availableRooms: number;
   occupiedRooms: number;
-  branchOccupancy?: { 
-    branchName: string; 
-    roomCount: number; 
-    occupancyRate: number; 
+  branchOccupancy?: {
+    branchName: string;
+    roomCount: number;
+    occupancyRate: number;
     staffCount: number;
     averageRating: number;
   }[];
@@ -763,7 +1142,6 @@ export const exportShiftReport = async (
       { label: 'Tổng check-in', value: formatNumber(totalCheckIns) },
       { label: 'Tổng check-out', value: formatNumber(totalCheckOuts) },
       { label: 'Tổng đặt phòng', value: formatNumber(totalBookings) },
-      { label: 'Tổng doanh thu', value: formatCurrency(totalRevenue) },
     ],
     tables: [
       // Shift summary by type
