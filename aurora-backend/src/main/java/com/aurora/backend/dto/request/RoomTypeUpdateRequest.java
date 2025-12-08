@@ -5,7 +5,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Set;
 
 @Data
@@ -14,6 +13,8 @@ import java.util.Set;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class RoomTypeUpdateRequest {
+    String categoryId; // Room category: Standard, Deluxe, Presidential Suite
+    
     String name;
     
     @Pattern(regexp = "^[A-Z]{3,5}$", message = "CODE_PATTERN_INVALID")
@@ -38,5 +39,5 @@ public class RoomTypeUpdateRequest {
     
     Boolean refundable;
     Set<String> amenityIds;
-    List<String> images;
+    String imageUrl; // Ảnh đại diện cho room type
 }

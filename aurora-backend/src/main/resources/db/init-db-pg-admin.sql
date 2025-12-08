@@ -24,12 +24,13 @@
 -- 5. room_types (phụ thuộc branches, room_categories)
 -- 6. room_type_amenities (phụ thuộc room_types, amenities)
 -- 7. rooms (phụ thuộc branches, room_types)
--- 8. services (phụ thuộc branches)
--- 9. promotions (phụ thuộc branches)
--- 10. bookings (phụ thuộc branches, users, promotions)
--- 11. booking_rooms (phụ thuộc bookings, rooms)
--- 12. service_bookings (phụ thuộc bookings, services, users)
--- 13. payments (phụ thuộc bookings)
+-- 8. service_categories (phụ thuộc branches) - MỚI: Danh mục dịch vụ
+-- 9. services (phụ thuộc branches, service_categories)
+-- 10. promotions (phụ thuộc branches)
+-- 11. bookings (phụ thuộc branches, users, promotions)
+-- 12. booking_rooms (phụ thuộc bookings, rooms)
+-- 13. service_bookings (phụ thuộc bookings, services, users)
+-- 14. payments (phụ thuộc bookings)
 -- ============================================================================
 
 -- ============================================================================
@@ -349,13 +350,47 @@ ON CONFLICT DO NOTHING;
 
 -- ============================================================================
 -- 4. ROOM CATEGORIES (Hạng phòng)
--- Tạo 3 categories: Standard Room, Deluxe Room, Presidential Suite
--- CHỈ TẠO CHO HCM BRANCH
+-- Tạo 3 categories cho mỗi branch: Standard Room, Deluxe Room, Presidential Suite
 -- ============================================================================
 INSERT INTO room_categories (
     id, branch_id, name, code, description, display_order, active, image_url,
     created_at, updated_at, version, deleted
 ) VALUES 
+-- ===== HANOI CATEGORIES =====
+(
+    'category-hn-std-001',
+    'branch-hanoi-001',
+    'Standard Room',
+    'STD',
+    'Phòng tiêu chuẩn với đầy đủ tiện nghi cơ bản, phù hợp cho khách du lịch và công tác',
+    1,
+    true,
+    'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=800&h=600&fit=crop',
+    NOW(), NOW(), 0, false
+),
+(
+    'category-hn-dlx-001',
+    'branch-hanoi-001',
+    'Deluxe Room',
+    'DLX',
+    'Phòng cao cấp với không gian rộng rãi và view đẹp, dịch vụ hoàn hảo',
+    2,
+    true,
+    'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=800&h=600&fit=crop',
+    NOW(), NOW(), 0, false
+),
+(
+    'category-hn-pre-001',
+    'branch-hanoi-001',
+    'Presidential Suite',
+    'PRE',
+    'Phòng tổng thống sang trọng bậc nhất với đầy đủ tiện nghi 5 sao và dịch vụ butler riêng',
+    3,
+    true,
+    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=800&h=600&fit=crop',
+    NOW(), NOW(), 0, false
+),
+-- ===== HCM CATEGORIES =====
 -- Standard Room Category
 (
     'category-hcm-std-001',
@@ -405,7 +440,7 @@ INSERT INTO room_types (
     id, branch_id, category_id, name, code, price_from,
     capacity_adults, capacity_children, max_occupancy,
     sizem2, bed_type, number_of_beds, refundable, smoking_allowed,
-    description, short_description, images,
+    description, short_description, image_url,
     created_at, updated_at, version, deleted
 ) VALUES 
 -- ===== STANDARD ROOM CATEGORY =====
@@ -424,7 +459,7 @@ INSERT INTO room_types (
     true, false,
     'Phòng đơn tiêu chuẩn với view thành phố, phù hợp cho khách công tác. Trang bị đầy đủ tiện nghi cơ bản: TV, minibar, điều hòa, wifi miễn phí.',
     'Phòng đơn view thành phố 25m²',
-    '["https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&h=800&fit=crop"]',
+    'https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&h=800&fit=crop',
     NOW(), NOW(), 0, false
 ),
 -- Standard Couple Bedroom Sea View
@@ -442,7 +477,7 @@ INSERT INTO room_types (
     true, false,
     'Phòng đôi tiêu chuẩn với view sông Sài Gòn lãng mạn, giường Queen size thoải mái. Thích hợp cho cặp đôi, gia đình nhỏ.',
     'Phòng đôi view sông 30m²',
-    '["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=800&fit=crop"]',
+    'https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=800&fit=crop',
     NOW(), NOW(), 0, false
 ),
 
@@ -462,7 +497,7 @@ INSERT INTO room_types (
     true, false,
     'Phòng đơn cao cấp với giường King size, view toàn cảnh thành phố từ tầng cao. Nội thất sang trọng, phòng tắm đứng hiện đại.',
     'Phòng đơn cao cấp view thành phố 35m²',
-    '["https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1200&h=800&fit=crop"]',
+    'https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1200&h=800&fit=crop',
     NOW(), NOW(), 0, false
 ),
 -- Deluxe Couple Bedroom Sea View
@@ -480,7 +515,7 @@ INSERT INTO room_types (
     true, false,
     'Phòng đôi cao cấp view sông tuyệt đẹp, có ban công riêng. Bồn tắm nằm, minibar cao cấp, máy pha cà phê Nespresso.',
     'Phòng đôi cao cấp view sông 40m²',
-    '["https://images.unsplash.com/photo-1568605117037-4d9c780fac89?w=1200&h=800&fit=crop"]',
+    'https://images.unsplash.com/photo-1568605117037-4d9c780fac89?w=1200&h=800&fit=crop',
     NOW(), NOW(), 0, false
 ),
 
@@ -500,7 +535,7 @@ INSERT INTO room_types (
     true, false,
     'Suite 2 phòng ngủ siêu sang với view panorama thành phố. Phòng khách rộng, bếp nhỏ, 2 phòng tắm, dịch vụ butler 24/7.',
     'Suite 2 phòng ngủ view thành phố 80m²',
-    '["https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&h=800&fit=crop"]',
+    'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&h=800&fit=crop',
     NOW(), NOW(), 0, false
 ),
 -- Presidential Three Bedroom Sea View
@@ -518,7 +553,7 @@ INSERT INTO room_types (
     true, false,
     'Suite tổng thống 3 phòng ngủ đẳng cấp nhất với view sông Sài Gòn 270°. Phòng khách 50m², phòng ăn riêng, bếp đầy đủ, 3 phòng tắm marble, spa mini, dịch vụ butler & limousine.',
     'Suite tổng thống 3 phòng ngủ view sông 120m²',
-    '["https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&h=800&fit=crop"]',
+    'https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&h=800&fit=crop',
     NOW(), NOW(), 0, false
 )
 ON CONFLICT DO NOTHING;
@@ -570,11 +605,11 @@ INSERT INTO rooms (
     'roomtype-hcm-std-single-city-001',
     '301',
     3,
-    'AVAILABLE',
+    'READY',
     'CITY',
     1200000.00,
     0.00,
-    '["https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&h=800&fit=crop"]',
+    '["https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?w=1200&h=800&fit=crop"]',
     NOW(), NOW(), 0, false
 ),
 (
@@ -583,11 +618,11 @@ INSERT INTO rooms (
     'roomtype-hcm-std-single-city-001',
     '302',
     3,
-    'AVAILABLE',
+    'READY',
     'CITY',
     1200000.00,
     10.00,
-    '["https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&h=800&fit=crop"]',
+    '["https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1540518614846-7eded433c457?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1631049421450-348ccd7f8949?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1598928506311-c55ded91a20c?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?w=1200&h=800&fit=crop"]',
     NOW(), NOW(), 0, false
 ),
 -- Standard Couple Bedroom Sea View (2 phòng)
@@ -597,11 +632,11 @@ INSERT INTO rooms (
     'roomtype-hcm-std-couple-sea-001',
     '501',
     5,
-    'AVAILABLE',
+    'READY',
     'SEA',
     1500000.00,
     0.00,
-    '["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=800&fit=crop"]',
+    '["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1578683010236-d716f9a3f461?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1587985064135-0366536eab42?w=1200&h=800&fit=crop"]',
     NOW(), NOW(), 0, false
 ),
 (
@@ -610,11 +645,11 @@ INSERT INTO rooms (
     'roomtype-hcm-std-couple-sea-001',
     '502',
     5,
-    'OCCUPIED',
+    'READY',
     'SEA',
     1500000.00,
     0.00,
-    '["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=800&fit=crop"]',
+    '["https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1591088398332-8a7791972843?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1512918728675-ed5a9ecdebfd?w=1200&h=800&fit=crop"]',
     NOW(), NOW(), 0, false
 ),
 -- Deluxe Single Bedroom City View (2 phòng)
@@ -624,11 +659,11 @@ INSERT INTO rooms (
     'roomtype-hcm-dlx-single-city-001',
     '801',
     8,
-    'AVAILABLE',
+    'READY',
     'CITY',
     1800000.00,
     15.00,
-    '["https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1200&h=800&fit=crop"]',
+    '["https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1590381105924-c72589b9ef3f?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1200&h=800&fit=crop"]',
     NOW(), NOW(), 0, false
 ),
 (
@@ -641,7 +676,7 @@ INSERT INTO rooms (
     'CITY',
     1800000.00,
     0.00,
-    '["https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1200&h=800&fit=crop"]',
+    '["https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1455587734955-081b22074882?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1559508551-44bff1de756b?w=1200&h=800&fit=crop"]',
     NOW(), NOW(), 0, false
 ),
 -- Deluxe Couple Bedroom Sea View (2 phòng)
@@ -651,11 +686,11 @@ INSERT INTO rooms (
     'roomtype-hcm-dlx-couple-sea-001',
     '1001',
     10,
-    'AVAILABLE',
+    'READY',
     'SEA',
     2200000.00,
     20.00,
-    '["https://images.unsplash.com/photo-1568605117037-4d9c780fac89?w=1200&h=800&fit=crop"]',
+    '["https://images.unsplash.com/photo-1568605117037-4d9c780fac89?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1582719508461-905c673771fd?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1611048267451-e6ed903d4a38?w=1200&h=800&fit=crop"]',
     NOW(), NOW(), 0, false
 ),
 (
@@ -664,11 +699,11 @@ INSERT INTO rooms (
     'roomtype-hcm-dlx-couple-sea-001',
     '1002',
     10,
-    'AVAILABLE',
+    'READY',
     'SEA',
     2200000.00,
     0.00,
-    '["https://images.unsplash.com/photo-1568605117037-4d9c780fac89?w=1200&h=800&fit=crop"]',
+    '["https://images.unsplash.com/photo-1568605117037-4d9c780fac89?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1566665797739-1674de7a421a?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1591088398332-8a7791972843?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1631049421450-348ccd7f8949?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1615873968403-89e068629265?w=1200&h=800&fit=crop"]',
     NOW(), NOW(), 0, false
 ),
 -- Presidential Two Bedroom City View (1 phòng)
@@ -678,11 +713,11 @@ INSERT INTO rooms (
     'roomtype-hcm-pre-two-city-001',
     '1501',
     15,
-    'AVAILABLE',
+    'READY',
     'CITY',
     4500000.00,
     0.00,
-    '["https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&h=800&fit=crop"]',
+    '["https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1611892440504-42a792e24d32?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1590490360182-c33d57733427?w=1200&h=800&fit=crop"]',
     NOW(), NOW(), 0, false
 ),
 -- Presidential Three Bedroom Sea View (1 phòng)
@@ -692,58 +727,365 @@ INSERT INTO rooms (
     'roomtype-hcm-pre-three-sea-001',
     '2001',
     20,
-    'AVAILABLE',
+    'READY',
     'SEA',
     6500000.00,
     5.00,
-    '["https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&h=800&fit=crop"]',
+    '["https://images.unsplash.com/photo-1618773928121-c32242e63f39?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1568605117037-4d9c780fac89?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1631049307264-da0ec9d70304?w=1200&h=800&fit=crop"]',
     NOW(), NOW(), 0, false
 )
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
--- 8. SERVICES (Dịch vụ)
--- Tạo 2 services cho HCM
+-- 8. SERVICE CATEGORIES (Danh mục dịch vụ)
+-- Tạo các categories cho HCM branch
 -- ============================================================================
-INSERT INTO services (
-    id, branch_id, name, type, description, base_price, unit,
-    duration_minutes, requires_booking, active, operating_hours, images,
+INSERT INTO service_categories (
+    id, branch_id, name, code, description, display_order, active, image_url,
     created_at, updated_at, version, deleted
 ) VALUES 
+-- Spa & Wellness
 (
-    'service-hcm-airport-001',
+    'svc-cat-hcm-spa-001',
     'branch-hcm-001',
-    'Airport Transfer HCM',
-    'AIRPORT_TRANSFER',
-    'Đưa đón sân bay Tân Sơn Nhất - Khách sạn (1 chiều)',
-    500000.00,
-    'trip',
+    'Spa & Wellness',
+    'SPA_WELLNESS',
+    'Dịch vụ sức khỏe và làm đẹp: Gym, Massage, Tắm sauna, Xông hơi',
+    1,
+    true,
+    'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=800&h=600&fit=crop',
+    NOW(), NOW(), 0, false
+),
+-- Food & Drink
+(
+    'svc-cat-hcm-food-001',
+    'branch-hcm-001',
+    'Food & Drink',
+    'FOOD_DRINK',
+    'Dịch vụ ăn uống tại phòng: Buffet sáng, trưa, tối và đặc biệt',
+    2,
+    true,
+    'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=800&h=600&fit=crop',
+    NOW(), NOW(), 0, false
+),
+-- Transportation & Guide
+(
+    'svc-cat-hcm-transport-001',
+    'branch-hcm-001',
+    'Transportation & Guide',
+    'TRANSPORT_GUIDE',
+    'Dịch vụ vận chuyển và hướng dẫn: Đưa đón sân bay, thuê hướng dẫn viên',
+    3,
+    true,
+    'https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=800&h=600&fit=crop',
+    NOW(), NOW(), 0, false
+),
+-- Housekeeping & Laundry
+(
+    'svc-cat-hcm-housekeeping-001',
+    'branch-hcm-001',
+    'Housekeeping & Laundry',
+    'HOUSEKEEPING',
+    'Dịch vụ dọn phòng và giặt ủi: Giặt ướt, giặt khô, ủi đồ, chăm sóc thú cưng',
+    4,
+    true,
+    'https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=800&h=600&fit=crop',
+    NOW(), NOW(), 0, false
+)
+ON CONFLICT DO NOTHING;
+
+-- ============================================================================
+-- 9. SERVICES (Dịch vụ)
+-- Tạo services cho từng category
+-- ============================================================================
+INSERT INTO services (
+    id, branch_id, category_id, name, description, base_price, unit,
+    duration_minutes, max_capacity_per_slot, requires_booking, active, operating_hours, images,
+    created_at, updated_at, version, deleted
+) VALUES 
+-- ===== SPA & WELLNESS CATEGORY =====
+-- Gym
+(
+    'service-hcm-gym-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-spa-001',
+    'Gym & Fitness Center',
+    'Phòng gym đầy đủ trang thiết bị hiện đại, có HLV hỗ trợ',
+    0.00,
+    'per visit',
+    NULL,
+    30,
+    false,
+    true,
+    '05:00 - 23:00',
+    '["https://images.unsplash.com/photo-1540497077202-7c8a3999166f?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1571902943202-507ec2618e8f?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+-- Massage
+(
+    'service-hcm-massage-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-spa-001',
+    'Massage Therapy',
+    'Massage trị liệu thư giãn 60 phút với các kỹ thuật chuyên nghiệp',
+    600000.00,
+    'per session',
     60,
+    1,
+    true,
+    true,
+    '09:00 - 22:00',
+    '["https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1600334585358-93470feb59ca?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1599901860904-17e6ed7083a0?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+-- Tắm sauna kiểu Đức
+(
+    'service-hcm-sauna-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-spa-001',
+    'German Sauna',
+    'Tắm sauna kiểu Đức với nhiệt độ cao, giúp thải độc và thư giãn cơ thể',
+    300000.00,
+    'per session',
+    90,
+    10,
+    true,
+    true,
+    '10:00 - 22:00',
+    '["https://images.unsplash.com/photo-1600334585358-93470feb59ca?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1576816579740-28848e2fd5e5?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+-- Xông hơi
+(
+    'service-hcm-steam-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-spa-001',
+    'Steam Room',
+    'Phòng xông hơi với hơi nước nóng, tốt cho da và hệ hô hấp',
+    250000.00,
+    'per session',
+    60,
+    8,
+    true,
+    true,
+    '10:00 - 22:00',
+    '["https://images.unsplash.com/photo-1596979544786-7e6d5f2e8d7e?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1600334585358-93470feb59ca?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1571896349842-33c89424de2d?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+
+-- ===== FOOD & DRINK CATEGORY =====
+-- Buffet sáng
+(
+    'service-hcm-buffet-breakfast-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-food-001',
+    'Breakfast Buffet',
+    'Buffet sáng phong phú với các món Á - Âu, trái cây tươi, đồ uống',
+    350000.00,
+    'per person',
+    NULL,
+    NULL,
+    true,
+    true,
+    '06:00 - 10:00',
+    '["https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1526367790999-0150786686a2?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1544025162-d76694265947?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1495521821757-a1efb6729352?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+-- Buffet trưa
+(
+    'service-hcm-buffet-lunch-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-food-001',
+    'Lunch Buffet',
+    'Buffet trưa đa dạng với các món nóng, lạnh, món nướng, canh, tráng miệng',
+    450000.00,
+    'per person',
+    NULL,
+    NULL,
+    true,
+    true,
+    '11:30 - 14:00',
+    '["https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+-- Buffet tối
+(
+    'service-hcm-buffet-dinner-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-food-001',
+    'Dinner Buffet',
+    'Buffet tối cao cấp với hải sản tươi sống, món nướng, cocktail',
+    650000.00,
+    'per person',
+    NULL,
+    NULL,
+    true,
+    true,
+    '18:00 - 22:00',
+    '["https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+-- Buffet đặc biệt
+(
+    'service-hcm-buffet-special-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-food-001',
+    'Special Buffet',
+    'Buffet đặc biệt theo chủ đề với các món cao cấp và rượu vang',
+    1200000.00,
+    'per person',
+    NULL,
+    NULL,
+    true,
+    true,
+    '18:00 - 22:00',
+    '["https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1559339352-11d035aa65de?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+
+-- ===== TRANSPORTATION & GUIDE CATEGORY =====
+-- Đưa đón sân bay xe 4 chỗ
+(
+    'service-hcm-airport-4seat-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-transport-001',
+    'Airport Transfer (4 Seater)',
+    'Đưa đón sân bay Tân Sơn Nhất bằng xe 4 chỗ (Camry/Mazda) - 1 chiều',
+    400000.00,
+    'per trip',
+    60,
+    4,
     true,
     true,
     '24/7',
-    '["https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop"]',
+    '["https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1502877338535-766e1452684a?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1502169863049-9f700775dca0?w=1200&h=800&fit=crop"]',
     NOW(), NOW(), 0, false
 ),
+-- Đưa đón sân bay xe 7 chỗ
 (
-    'service-hcm-spa-001',
+    'service-hcm-airport-7seat-001',
     'branch-hcm-001',
-    'Spa & Massage HCM',
-    'SPA',
-    'Liệu trình spa thư giãn 90 phút tại HCM',
-    800000.00,
-    'session',
-    90,
+    'svc-cat-hcm-transport-001',
+    'Airport Transfer (7 Seater)',
+    'Đưa đón sân bay Tân Sơn Nhất bằng xe 7 chỗ (Innova/Fortuner/Carnival) - 1 chiều, phù hợp gia đình',
+    600000.00,
+    'per trip',
+    60,
+    7,
     true,
     true,
-    '09:00 - 21:00',
-    '["https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1600334585358-93470feb59ca?w=1200&h=800&fit=crop"]',
+    '24/7',
+    '["https://images.unsplash.com/photo-1449824913935-59a10b8d2000?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1502877338535-766e1452684a?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1502169863049-9f700775dca0?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+-- Đưa đón sân bay xe Limousine D-Car
+(
+    'service-hcm-airport-limo-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-transport-001',
+    'Airport Transfer (Limousine D-Car)',
+    'Đưa đón sân bay Tân Sơn Nhất bằng xe Limousine D-Car 9 chỗ cao cấp - 1 chiều',
+    1200000.00,
+    'per trip',
+    60,
+    9,
+    true,
+    true,
+    '24/7',
+    '["https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1492144534655-ae79c964c9d7?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1502877338535-766e1452684a?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1502169863049-9f700775dca0?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+-- Thuê hướng dẫn viên địa phương
+(
+    'service-hcm-guide-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-transport-001',
+    'Local Tour Guide',
+    'Thuê hướng dẫn viên địa phương nói tiếng Việt/Anh, dẫn tour thành phố',
+    1500000.00,
+    'per day',
+    480,
+    10,
+    true,
+    true,
+    '08:00 - 20:00',
+    '["https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1467269204594-9661b134dd2b?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+
+-- ===== HOUSEKEEPING & LAUNDRY CATEGORY =====
+-- Giặt ướt (Wash & Fold)
+(
+    'service-hcm-laundry-wash-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-housekeeping-001',
+    'Laundry (Wash & Fold)',
+    'Giặt ướt và gấp quần áo, tính theo món hoặc theo kg',
+    50000.00,
+    'per item',
+    NULL,
+    NULL,
+    true,
+    true,
+    '08:00 - 18:00',
+    '["https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1584622787769-7bd3c4a4e3c6?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1583496661160-fb5886a013aa?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1563453392212-326f5e854473?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+-- Giặt khô (Dry Cleaning)
+(
+    'service-hcm-laundry-dry-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-housekeeping-001',
+    'Dry Cleaning',
+    'Giặt khô cho Vest, Sơ mi, Váy đầm - tính theo món',
+    150000.00,
+    'per item',
+    NULL,
+    NULL,
+    true,
+    true,
+    '08:00 - 18:00',
+    '["https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1584622787769-7bd3c4a4e3c6?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1583496661160-fb5886a013aa?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1563453392212-326f5e854473?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+-- Dịch vụ ủi đồ (Pressing only)
+(
+    'service-hcm-pressing-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-housekeeping-001',
+    'Pressing Service',
+    'Dịch vụ ủi đồ chỉ ủi, không giặt - tính theo món',
+    30000.00,
+    'per item',
+    NULL,
+    NULL,
+    true,
+    true,
+    '08:00 - 18:00',
+    '["https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1584622787769-7bd3c4a4e3c6?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1583496661160-fb5886a013aa?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1563453392212-326f5e854473?w=1200&h=800&fit=crop"]',
+    NOW(), NOW(), 0, false
+),
+-- Giữ & chăm sóc thú cưng
+(
+    'service-hcm-petcare-001',
+    'branch-hcm-001',
+    'svc-cat-hcm-housekeeping-001',
+    'Pet Care Service',
+    'Dịch vụ giữ và chăm sóc thú cưng (chó, mèo) khi khách đi ra ngoài',
+    500000.00,
+    'per day',
+    NULL,
+    NULL,
+    true,
+    true,
+    '24/7',
+    '["https://images.unsplash.com/photo-1552053831-71594a27632d?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1583337130417-3346a1be7dee?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1596854407944-bf87f6fdd49e?w=1200&h=800&fit=crop","https://images.unsplash.com/photo-1583512603805-3cc6b41f3dcb?w=1200&h=800&fit=crop"]',
     NOW(), NOW(), 0, false
 )
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
--- 9. PROMOTIONS (Khuyến mãi)
+-- 10. PROMOTIONS (Khuyến mãi)
 -- Tạo 2 promotions cho HCM
 -- ============================================================================
 INSERT INTO promotions (
@@ -795,14 +1137,33 @@ INSERT INTO promotions (
 ON CONFLICT (code) DO NOTHING;
 
 -- ============================================================================
--- 10. BOOKINGS (Đặt phòng)
+-- 11. BOOKINGS (Đặt phòng)
 -- Tạo 2 bookings cho HCM
 -- ============================================================================
+-- Add new columns for guest information (if not exists)
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'bookings' AND column_name = 'guest_full_name') THEN
+        ALTER TABLE bookings ADD COLUMN guest_full_name VARCHAR(200);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'bookings' AND column_name = 'guest_email') THEN
+        ALTER TABLE bookings ADD COLUMN guest_email VARCHAR(100);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'bookings' AND column_name = 'guest_phone') THEN
+        ALTER TABLE bookings ADD COLUMN guest_phone VARCHAR(20);
+    END IF;
+    -- Make customer_id nullable for walk-in guests
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'bookings' AND column_name = 'customer_id' AND is_nullable = 'NO') THEN
+        ALTER TABLE bookings ALTER COLUMN customer_id DROP NOT NULL;
+    END IF;
+END $$;
+
 INSERT INTO bookings (
     id, booking_code, branch_id, customer_id, applied_promotion_id,
     checkin, checkout, special_request,
+    guest_full_name, guest_email, guest_phone,
     status, payment_status,
-    subtotal_price, discount_amount, total_price, deposit_amount,
+    subtotal_price, discount_amount, total_price,
     email_sent, sms_sent,
     created_at, updated_at, version, deleted
 ) VALUES 
@@ -816,12 +1177,14 @@ INSERT INTO bookings (
     CURRENT_DATE + INTERVAL '5 days',
     CURRENT_DATE + INTERVAL '8 days',
     'Phòng tầng cao, view đẹp. Early check-in nếu có thể',
+    NULL, -- guest_full_name (customer exists)
+    NULL, -- guest_email (customer exists)
+    NULL, -- guest_phone (customer exists)
     'CONFIRMED',
-    'DEPOSIT_PAID',
+    'PAID', -- Payment successful
     4500000.00,
     0.00,
     4500000.00,
-    2250000.00,
     true, false,
     NOW(), NOW(), 0, false
 ),
@@ -835,25 +1198,35 @@ INSERT INTO bookings (
     CURRENT_DATE - INTERVAL '2 days',
     CURRENT_DATE + INTERVAL '3 days',
     NULL,
+    NULL, -- guest_full_name (customer exists)
+    NULL, -- guest_email (customer exists)
+    NULL, -- guest_phone (customer exists)
     'CHECKED_IN',
     'PAID',
     11000000.00,
     0.00,
     11000000.00,
-    NULL,
     true, true,
     NOW(), NOW(), 0, false
 )
 ON CONFLICT (booking_code) DO NOTHING;
 
 -- ============================================================================
--- 11. BOOKING ROOMS (Chi tiết phòng đặt)
+-- 12. BOOKING ROOMS (Chi tiết phòng đặt)
 -- Tạo 2 booking rooms cho HCM
 -- ============================================================================
+-- Add room_notes column if not exists
+DO $$ 
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'booking_rooms' AND column_name = 'room_notes') THEN
+        ALTER TABLE booking_rooms ADD COLUMN room_notes VARCHAR(500);
+    END IF;
+END $$;
+
 INSERT INTO booking_rooms (
     id, booking_id, room_id,
     price_per_night, nights, actual_adults, actual_children,
-    total_amount, guest_names,
+    total_amount, room_notes,
     created_at, updated_at, version, deleted
 ) VALUES 
 -- Booking 1: Standard Couple Sea View (room 502 - đang OCCUPIED)
@@ -865,7 +1238,7 @@ INSERT INTO booking_rooms (
     3,
     2, 0,
     4500000.00,
-    'Nguyen Van A, Nguyen Thi B',
+    NULL, -- room_notes
     NOW(), NOW(), 0, false
 ),
 -- Booking 2: Deluxe Couple Sea View (room 1001)
@@ -877,13 +1250,13 @@ INSERT INTO booking_rooms (
     5,
     2, 0,
     11000000.00,
-    'Tran Van C, Tran Thi D',
+    NULL, -- room_notes
     NOW(), NOW(), 0, false
 )
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
--- 12. SERVICE BOOKINGS (Đặt dịch vụ)
+-- 13. SERVICE BOOKINGS (Đặt dịch vụ)
 -- Tạo 2 service bookings cho HCM
 -- ============================================================================
 INSERT INTO service_bookings (
@@ -892,30 +1265,30 @@ INSERT INTO service_bookings (
     status, special_instructions,
     created_at, updated_at, version, deleted
 ) VALUES 
--- Service booking 1: Airport transfer cho booking HCM 1
+-- Service booking 1: Airport transfer (4 seater) cho booking HCM 1
 (
     'servicebooking-hcm-001',
     'booking-hcm-001',
-    'service-hcm-airport-001',
+    'service-hcm-airport-4seat-001',
     (SELECT id FROM users WHERE username = 'customer' LIMIT 1),
     (CURRENT_DATE + INTERVAL '5 days')::timestamp + TIME '14:00:00',
     1,
-    500000.00,
-    500000.00,
+    400000.00,
+    400000.00,
     'CONFIRMED',
-    'Pickup at Tan Son Nhat airport',
+    'Pickup at Tan Son Nhat airport - 4 seater car',
     NOW(), NOW(), 0, false
 ),
--- Service booking 2: Spa cho booking HCM 1
+-- Service booking 2: Massage cho booking HCM 1
 (
     'servicebooking-hcm-002',
     'booking-hcm-001',
-    'service-hcm-spa-001',
+    'service-hcm-massage-001',
     (SELECT id FROM users WHERE username = 'customer' LIMIT 1),
     (CURRENT_DATE + INTERVAL '6 days')::timestamp + TIME '15:00:00',
     2,
-    800000.00,
-    1600000.00,
+    600000.00,
+    1200000.00,
     'CONFIRMED',
     'Couple massage session',
     NOW(), NOW(), 0, false
@@ -923,7 +1296,7 @@ INSERT INTO service_bookings (
 ON CONFLICT DO NOTHING;
 
 -- ============================================================================
--- 13. PAYMENTS (Thanh toán)
+-- 14. PAYMENTS (Thanh toán)
 -- Tạo 2 payments cho HCM
 -- ============================================================================
 INSERT INTO payments (

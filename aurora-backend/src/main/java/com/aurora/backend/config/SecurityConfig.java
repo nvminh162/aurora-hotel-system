@@ -23,8 +23,6 @@ import java.util.List;
 @EnableMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
-
     private static final String[] PUBLIC_POST_ENDPOINTS = {
             // Auth endpoints - Session management with Redis
             "/api/v1/auth/register",
@@ -41,11 +39,17 @@ public class SecurityConfig {
             "/api/v1/auth/verify-email",
             "/api/v1/auth/resend-verification-email",
 
+            // RAG chatbot
             "/api/v1/rag/**",
-            "/api/v1/documents/**",
 
             // Room availability - PUBLIC for availability check
             "/api/v1/room-availability/check-multiple",
+            
+            // Booking checkout - PUBLIC for customers and walk-in guests
+            "/api/v1/bookings/checkout",
+
+            // VNPay payment creation - PUBLIC for guest checkout
+            "/api/v1/payments/vnpay/create",
 
             // VNPay IPN callback - MUST be public for VNPay server-to-server callback
             "/api/v1/payments/vnpay/ipn",
@@ -68,10 +72,11 @@ public class SecurityConfig {
             "/api/v1/room-categories/**",
             "/api/v1/promotions/**",
             "/api/v1/services/**",
+            "/api/v1/service-categories/**",
             "/api/v1/facilities/**",
             "/api/v1/amenities/**",
             "/api/v1/rag/**",
-            "/api/v1/documents/**",
+            "/api/v1/news/public/**",
             "/api/v1/payments/vnpay/return",
 
             // Cloudinary test endpoint
@@ -81,7 +86,10 @@ public class SecurityConfig {
             "/api/v1/room-availability/check/**",
             "/api/v1/room-availability/find-available/**",
             "/api/v1/room-availability/calendar/**",
-            "/api/v1/room-availability/count-available/**"
+            "/api/v1/room-availability/count-available/**",
+            
+            // Booking public endpoints - For guest booking lookup
+            "/api/v1/bookings/public/**"
     };
     private final CustomJwtDecoder customJwtDecoder;
     private final CustomJwtAuthenticationConverter customJwtAuthenticationConverter;

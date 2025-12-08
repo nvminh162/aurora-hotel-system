@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
-import { Eye, MoreHorizontal, CheckCircle, XCircle, Edit } from 'lucide-react';
+import { Eye, MoreHorizontal, CheckCircle, XCircle, Edit, LogIn, LogOut } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -35,20 +35,28 @@ const bookingStatusConfig: Record<BookingStatus, { label: string; variant: 'defa
   CONFIRMED: { label: 'Đã xác nhận', variant: 'success' },
   CHECKED_IN: { label: 'Đã nhận phòng', variant: 'default' },
   CHECKED_OUT: { label: 'Đã trả phòng', variant: 'secondary' },
+  COMPLETED: { label: 'Hoàn thành', variant: 'success' },
   CANCELLED: { label: 'Đã hủy', variant: 'destructive' },
   NO_SHOW: { label: 'Không đến', variant: 'outline' },
 };
 
 const paymentStatusConfig: Record<PaymentStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' }> = {
   PENDING: { label: 'Chờ thanh toán', variant: 'warning' },
-  PAID: { label: 'Đã thanh toán', variant: 'success' },
+  DEPOSIT_PAID: { label: 'Đã đặt cọc', variant: 'secondary' },
   PARTIALLY_PAID: { label: 'Thanh toán một phần', variant: 'secondary' },
+  PAID: { label: 'Đã thanh toán', variant: 'success' },
   REFUNDED: { label: 'Đã hoàn tiền', variant: 'outline' },
-  FAILED: { label: 'Thất bại', variant: 'destructive' },
 };
 
 export default function BookingList() {
   const navigate = useNavigate();
+  
+  // Detect current role prefix from URL
+  const currentPath = window.location.pathname;
+  const rolePrefix = currentPath.startsWith('/admin') ? '/admin' 
+    : currentPath.startsWith('/manager') ? '/manager'
+    : currentPath.startsWith('/staff') ? '/staff'
+    : '';
   
   // State
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -99,7 +107,7 @@ export default function BookingList() {
       setError(null);
       
       const response = await bookingApi.search({
-        hotelId: selectedBranch || undefined,
+        branchId: selectedBranch || undefined,
         status: selectedStatus as BookingStatus || undefined,
         page: currentPage,
         size: pageSize,
@@ -167,6 +175,34 @@ export default function BookingList() {
       fetchBookings();
     } catch {
       toast.error('Không thể xác nhận đặt phòng');
+    }
+  };
+
+  // Handle check-in
+  const handleCheckIn = async (bookingId: string) => {
+    try {
+      const currentUserId = localStorage.getItem('userId') || 'SYSTEM';
+      await bookingApi.checkIn(bookingId, currentUserId);
+      toast.success('Check-in thành công');
+      fetchBookings();
+    } catch (error: any) {
+      toast.error('Check-in thất bại', {
+        description: error.response?.data?.message || 'Vui lòng thử lại',
+      });
+    }
+  };
+
+  // Handle check-out
+  const handleCheckOut = async (bookingId: string) => {
+    try {
+      const currentUserId = localStorage.getItem('userId') || 'SYSTEM';
+      await bookingApi.checkOut(bookingId, currentUserId);
+      toast.success('Check-out thành công');
+      fetchBookings();
+    } catch (error: any) {
+      toast.error('Check-out thất bại', {
+        description: error.response?.data?.message || 'Vui lòng thử lại',
+      });
     }
   };
 
@@ -310,11 +346,11 @@ export default function BookingList() {
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Thao tác</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => navigate(`/admin/booking/${booking.id}`)}>
+              <DropdownMenuItem onClick={() => navigate(`${rolePrefix}/bookings/${booking.id}`)}>
                 <Eye className="h-4 w-4 mr-2" />
                 Xem chi tiết
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => navigate(`/admin/booking/upsert`)}>
+              <DropdownMenuItem onClick={() => navigate(`${rolePrefix}/bookings/upsert`)}>
                 <Edit className="h-4 w-4 mr-2" />
                 Chỉnh sửa
               </DropdownMenuItem>
@@ -334,6 +370,24 @@ export default function BookingList() {
                   >
                     <XCircle className="h-4 w-4 mr-2" />
                     Hủy đặt phòng
+                  </DropdownMenuItem>
+                </>
+              )}
+              {booking.status === 'CONFIRMED' && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleCheckIn(booking.id)}>
+                    <LogIn className="h-4 w-4 mr-2 text-blue-500" />
+                    Check-in
+                  </DropdownMenuItem>
+                </>
+              )}
+              {booking.status === 'CHECKED_IN' && (
+                <>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleCheckOut(booking.id)}>
+                    <LogOut className="h-4 w-4 mr-2 text-purple-500" />
+                    Check-out
                   </DropdownMenuItem>
                 </>
               )}
@@ -361,7 +415,7 @@ export default function BookingList() {
       <PageHeader
         title="Quản lý đặt phòng"
         description="Xem và quản lý tất cả đặt phòng trong hệ thống"
-        onAdd={() => navigate('/admin/booking/upsert')}
+        onAdd={() => navigate(`${rolePrefix}/bookings/upsert`)}
         addButtonText="Tạo đặt phòng"
         onRefresh={fetchBookings}
         isLoading={isLoading}

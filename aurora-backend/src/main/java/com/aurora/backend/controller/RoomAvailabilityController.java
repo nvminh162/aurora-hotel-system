@@ -103,27 +103,4 @@ public class RoomAvailabilityController {
                 .result(conflicts)
                 .build();
     }
-
-    @PostMapping("/lock")
-    public ApiResponse<String> lockRoom(
-            @RequestParam String roomId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkinDate,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkoutDate,
-            @RequestParam String userId
-    ) {
-        String lockToken = roomAvailabilityService.lockRoom(roomId, checkinDate, checkoutDate, userId);
-        return ApiResponse.<String>builder()
-                .result(lockToken)
-                .message("Room locked successfully for 15 minutes")
-                .build();
-    }
-
-    @PostMapping("/unlock")
-    public ApiResponse<Boolean> unlockRoom(@RequestParam String lockToken) {
-        boolean released = roomAvailabilityService.releaseRoomLock(lockToken);
-        return ApiResponse.<Boolean>builder()
-                .result(released)
-                .message(released ? "Room lock released successfully" : "Lock not found or already released")
-                .build();
-    }
 }

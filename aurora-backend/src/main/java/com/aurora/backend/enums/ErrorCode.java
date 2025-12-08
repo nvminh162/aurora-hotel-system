@@ -87,6 +87,7 @@ public enum ErrorCode {
     PAYMENT_AMOUNT_POSITIVE(1604, "Payment amount must be positive", HttpStatus.BAD_REQUEST),
     INVALID_PAYMENT_AMOUNT(1605, "Invalid payment amount", HttpStatus.BAD_REQUEST),
     PAYMENT_EXCEEDS_TOTAL(1606, "Payment amount exceeds booking total price", HttpStatus.BAD_REQUEST),
+    PAYMENT_NOT_SUCCESSFUL(1607, "Payment was not successful. Booking cannot be created.", HttpStatus.BAD_REQUEST),
     
     // Role errors
     ROLE_NOT_EXISTED(1700, "Role not found", HttpStatus.NOT_FOUND),
@@ -119,6 +120,7 @@ public enum ErrorCode {
     CAPACITY_ADULTS_POSITIVE(2004, "Capacity adults must be positive", HttpStatus.BAD_REQUEST),
     CAPACITY_CHILDREN_POSITIVE(2005, "Capacity children must be positive", HttpStatus.BAD_REQUEST),
     SIZE_POSITIVE(2006, "Room size must be positive", HttpStatus.BAD_REQUEST),
+    CATEGORY_NOT_EXISTED(2007, "Room category not found", HttpStatus.NOT_FOUND),
     
     // Room errors  
     ROOM_NOT_FOUND(2100, "Room not found", HttpStatus.NOT_FOUND),
@@ -196,6 +198,19 @@ public enum ErrorCode {
     CHECKOUT_NOT_CHECKED_IN(3004, "No active check-in found. Please check in first.", HttpStatus.BAD_REQUEST),
     NOT_CHECKED_IN(3004, "No active check-in found. Please check in first.", HttpStatus.BAD_REQUEST), // Alias
     SHIFT_CANCELLED(3005, "Cannot check in to cancelled shift", HttpStatus.BAD_REQUEST),
+    
+    // News errors
+    NEWS_NOT_FOUND(3100, "News not found", HttpStatus.NOT_FOUND),
+    NEWS_SLUG_EXISTED(3101, "News slug already exists", HttpStatus.BAD_REQUEST),
+    NEWS_TITLE_REQUIRED(3102, "News title is required", HttpStatus.BAD_REQUEST),
+    NEWS_CONTENT_REQUIRED(3103, "News content is required", HttpStatus.BAD_REQUEST),
+    NEWS_SLUG_REQUIRED(3104, "News slug is required", HttpStatus.BAD_REQUEST),
+    
+    // ImageAsset errors
+    IMAGE_NOT_FOUND(3200, "Image not found", HttpStatus.NOT_FOUND),
+    IMAGE_UPLOAD_FAILED(3201, "Failed to upload image", HttpStatus.INTERNAL_SERVER_ERROR),
+    IMAGE_DELETE_FAILED(3202, "Failed to delete image", HttpStatus.INTERNAL_SERVER_ERROR),
+    IMAGE_OWNER_REQUIRED(3203, "Image owner information is required", HttpStatus.BAD_REQUEST),
     ;
 
     ErrorCode(int code, String message, HttpStatusCode statusCode) {
