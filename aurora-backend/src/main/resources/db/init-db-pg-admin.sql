@@ -1101,48 +1101,39 @@ ON CONFLICT DO NOTHING;
 -- ============================================================================
 INSERT INTO promotions (
     id, branch_id, code, name, description,
-    discount_type, percent_off, amount_off,
-    min_booking_amount, max_discount_amount,
-    start_at, end_at, active, usage_limit, used_count,
+    discount_type, amount_off,
+    start_at, end_at, active, used_count,
     stackable, exclusive_with_others, priority,
     created_at, updated_at, version, deleted
 ) VALUES 
 (
-    'promo-hcm-summer-001',
-    'branch-hcm-001',
-    'HCMSUMMER2024',
-    'Summer Vacation HCM 2024',
-    'Giảm 20% cho booking từ 3 đêm trở lên tại HCM',
-    'PERCENTAGE',
-    20.0,
-    NULL,
-    5000000.00,
-    2000000.00,
+    'promo-summer-001',
+    NULL, -- Áp dụng cho tất cả chi nhánh
+    'SUMMER2024',
+    'Summer Vacation 2024',
+    'Giảm 500,000đ cho tất cả booking',
+    'FIXED_AMOUNT',
+    500000.00,
     CURRENT_DATE - INTERVAL '30 days',
     CURRENT_DATE + INTERVAL '60 days',
     true,
-    100,
     0,
-    false, false, 1,
+    false, false, 0,
     NOW(), NOW(), 0, false
 ),
 (
-    'promo-hcm-welcome-001',
-    'branch-hcm-001',
-    'HCMWELCOME50',
-    'Welcome New Customer HCM',
-    'Giảm 500k cho khách hàng mới tại HCM',
+    'promo-welcome-001',
+    NULL, -- Áp dụng cho tất cả chi nhánh
+    'WELCOME50',
+    'Welcome New Customer',
+    'Giảm 200,000đ cho khách hàng mới',
     'FIXED_AMOUNT',
-    NULL,
-    500000.00,
-    3000000.00,
-    NULL,
+    200000.00,
     CURRENT_DATE - INTERVAL '10 days',
     CURRENT_DATE + INTERVAL '90 days',
     true,
-    500,
     0,
-    false, false, 2,
+    false, false, 0,
     NOW(), NOW(), 0, false
 )
 ON CONFLICT (code) DO NOTHING;
