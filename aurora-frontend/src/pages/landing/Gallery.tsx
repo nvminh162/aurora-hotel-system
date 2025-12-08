@@ -19,8 +19,8 @@ export default function GalleryPage() {
         if (response.result) {
           console.log("Gallery images fetched:", response.result.length);
           // Filter out images with empty or invalid URLs
-          const validImages = response.result.filter(img => 
-            img.imageUrl && img.imageUrl.trim() !== '' && img.imageUrl !== 'null'
+          const validImages = response.result.filter((img: GalleryImage) =>
+            img.imageUrl && img.imageUrl.trim() !== "" && img.imageUrl !== "null"
           );
           console.log("Valid images:", validImages.length);
           setImages(validImages);
