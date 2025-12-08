@@ -28,12 +28,12 @@ public interface BookingRepository extends JpaRepository<Booking, String> {
     Page<Booking> findByCustomer(User customer, Pageable pageable);
     
     @Query("SELECT b FROM Booking b WHERE " +
-           "(:Branch IS NULL OR b.branch = :Branch) AND " +
+           "(:branch IS NULL OR b.branch = :branch) AND " +
            "(:customer IS NULL OR b.customer = :customer) AND " +
-           "(:status IS NULL OR :status = '' OR b.status = :status)")
-    Page<Booking> findByFilters(@Param("Branch") Branch Branch,
+           "(:statusEnum IS NULL OR b.status = :statusEnum)")
+    Page<Booking> findByFilters(@Param("branch") Branch branch,
                                @Param("customer") User customer,
-                               @Param("status") String status,
+                               @Param("statusEnum") Booking.BookingStatus statusEnum,
                                Pageable pageable);
     // =================================================================
     // (STATISTICS & DASHBOARD)

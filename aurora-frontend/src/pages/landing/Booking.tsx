@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { roomTypeApi, roomApi, roomCategoryApi } from "@/services/roomApi";
+import roomAvailabilityApi from "@/services/roomAvailabilityApi";
 import type { RoomType, Room, RoomCategory } from "@/types/room.types";
 import { toast } from "sonner";
 import {
@@ -51,6 +52,8 @@ export default function BookingPage() {
   const [roomTypes, setRoomTypes] = useState<RoomType[]>([]);
   const [roomType, setRoomType] = useState<RoomType | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
+  const [availableRoomIds, setAvailableRoomIds] = useState<Set<string>>(new Set());
+  const [checkingAvailability, setCheckingAvailability] = useState(false);
   const [loading, setLoading] = useState(true);
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [currentRoomType, setCurrentRoomType] = useState<RoomType | null>(null);
@@ -213,6 +216,9 @@ export default function BookingPage() {
         } else {
           setRoomType(null);
         }
+
+        // Check availability for all rooms
+        await checkRoomAvailability(finalRooms.map((item) => item.room));
       } catch (error) {
         console.error("Failed to fetch data:", error);
         toast.error("Không thể tải thông tin phòng");
@@ -229,6 +235,48 @@ export default function BookingPage() {
     filter.priceRange,
     roomTypes,
   ]);
+
+  // Check room availability when dates change
+  useEffect(() => {
+    if (rooms.length > 0) {
+      checkRoomAvailability(rooms);
+    }
+  }, [filter.checkIn, filter.checkOut]);
+
+  // Function to check room availability
+  const checkRoomAvailability = async (roomsToCheck: Room[]) => {
+    if (!filter.checkIn || !filter.checkOut || roomsToCheck.length === 0) {
+      return;
+    }
+
+    try {
+      setCheckingAvailability(true);
+      const roomIds = roomsToCheck.map((room) => room.id);
+
+      const response = await roomAvailabilityApi.checkMultipleRooms(
+        roomIds,
+        filter.checkIn,
+        filter.checkOut
+      );
+
+      if (response.result) {
+        // Create a set of available room IDs
+        const availableIds = new Set<string>();
+        Object.entries(response.result).forEach(([roomId, isAvailable]) => {
+          if (isAvailable) {
+            availableIds.add(roomId);
+          }
+        });
+        setAvailableRoomIds(availableIds);
+      }
+    } catch (error) {
+      console.error("Failed to check room availability:", error);
+      // On error, assume all rooms are available to avoid blocking user
+      setAvailableRoomIds(new Set(roomsToCheck.map((r) => r.id)));
+    } finally {
+      setCheckingAvailability(false);
+    }
+  };
 
   const handleViewImages = (room: Room) => {
     // Find the roomType for this specific room
@@ -263,6 +311,12 @@ export default function BookingPage() {
     const typeToUse = currentRoomType || roomType;
     if (!typeToUse) {
       toast.error("Không tìm thấy thông tin loại phòng");
+      return;
+    }
+
+    // Check if room is available
+    if (!availableRoomIds.has(room.id)) {
+      toast.error("Phòng này đã được đặt trong khoảng thời gian bạn chọn. Vui lòng chọn phòng khác hoặc thay đổi ngày.");
       return;
     }
 
@@ -363,10 +417,26 @@ export default function BookingPage() {
                   id="checkIn"
                   type="date"
                   value={filter.checkIn}
-                  onChange={(e) =>
-                    setFilter((prev) => ({ ...prev, checkIn: e.target.value }))
-                  }
+                  onChange={(e) => {
+                    const newCheckIn = e.target.value;
+                    
+                    // Check if new checkin is after or equal to checkout
+                    if (newCheckIn >= filter.checkOut) {
+                      toast.error("Ngày nhận phòng phải trước ngày trả phòng ít nhất 1 ngày");
+                      return;
+                    }
+                    
+                    setFilter((prev) => ({
+                      ...prev,
+                      checkIn: newCheckIn,
+                    }));
+                  }}
                   min={new Date().toISOString().split("T")[0]}
+                  max={(() => {
+                    const maxDate = new Date(filter.checkOut);
+                    maxDate.setDate(maxDate.getDate() - 1);
+                    return maxDate.toISOString().split("T")[0];
+                  })()}
                   className="w-full"
                 />
               </div>
@@ -376,10 +446,19 @@ export default function BookingPage() {
                   id="checkOut"
                   type="date"
                   value={filter.checkOut}
-                  onChange={(e) =>
-                    setFilter((prev) => ({ ...prev, checkOut: e.target.value }))
-                  }
-                  min={filter.checkIn}
+                  onChange={(e) => {
+                    const newCheckOut = e.target.value;
+                    if (newCheckOut <= filter.checkIn) {
+                      toast.error("Ngày trả phòng phải sau ngày nhận phòng ít nhất 1 ngày");
+                      return;
+                    }
+                    setFilter((prev) => ({ ...prev, checkOut: newCheckOut }));
+                  }}
+                  min={(() => {
+                    const minDate = new Date(filter.checkIn);
+                    minDate.setDate(minDate.getDate() + 1);
+                    return minDate.toISOString().split("T")[0];
+                  })()}
                   className="w-full"
                 />
               </div>
@@ -528,6 +607,16 @@ export default function BookingPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Left: Room List */}
             <div className="lg:col-span-2 space-y-6">
+              {checkingAvailability && (
+                <Card className="p-4 bg-blue-50 border-blue-200">
+                  <div className="flex items-center gap-3">
+                    <Loader2 className="h-5 w-5 animate-spin text-blue-600" />
+                    <p className="text-sm text-blue-700">
+                      Đang kiểm tra tình trạng phòng trống...
+                    </p>
+                  </div>
+                </Card>
+              )}
               <div>
                 {loading ? (
                   <Card className="p-8 text-center">
@@ -552,6 +641,8 @@ export default function BookingPage() {
                       const isSelected = bookingRooms.some(
                         (br) => br.roomId === room.id
                       );
+                      
+                      const isAvailable = availableRoomIds.has(room.id);
 
                       return (
                         <RoomCard
@@ -559,6 +650,7 @@ export default function BookingPage() {
                           room={room}
                           roomType={currentRoomType}
                           isSelected={isSelected}
+                          isAvailable={isAvailable}
                           onSelect={handleAddRoom}
                           onViewImages={handleViewImages}
                           showActionButton={true}

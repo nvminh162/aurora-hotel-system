@@ -192,6 +192,7 @@ public class BookingServiceImpl implements BookingService {
         
         Branch branch = null;
         User customer = null;
+        Booking.BookingStatus bookingStatus = null;
         
         if (branchId != null && !branchId.trim().isEmpty()) {
             branch = branchRepository.findById(branchId)
@@ -203,7 +204,17 @@ public class BookingServiceImpl implements BookingService {
                     .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
         }
         
-        Page<Booking> bookings = bookingRepository.findByFilters(branch, customer, status, pageable);
+        if (status != null && !status.trim().isEmpty()) {
+            try {
+                bookingStatus = Booking.BookingStatus.valueOf(status);
+            } catch (IllegalArgumentException e) {
+                log.warn("Invalid booking status: {}", status);
+                // Return empty page for invalid status
+                return Page.empty(pageable);
+            }
+        }
+        
+        Page<Booking> bookings = bookingRepository.findByFilters(branch, customer, bookingStatus, pageable);
         return bookings.map(bookingMapper::toBookingResponse);
     }
     

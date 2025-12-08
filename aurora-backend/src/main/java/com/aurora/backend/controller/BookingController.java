@@ -124,7 +124,7 @@ public class BookingController {
     @GetMapping("/search")
     @RequirePermission(PermissionConstants.Staff.BOOKING_VIEW_ALL)
     public ApiResponse<Page<BookingResponse>> searchBookings(
-            @RequestParam(required = false) String hotelId,
+            @RequestParam(required = false) String branchId,
             @RequestParam(required = false) String customerId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
@@ -133,7 +133,7 @@ public class BookingController {
             @RequestParam(defaultValue = "desc") String sortDir) {
         Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<BookingResponse> response = bookingService.searchBookings(hotelId, customerId, status, pageable);
+        Page<BookingResponse> response = bookingService.searchBookings(branchId, customerId, status, pageable);
         return ApiResponse.<Page<BookingResponse>>builder()
                 .code(HttpStatus.OK.value())
                 .message("Bookings searched successfully")

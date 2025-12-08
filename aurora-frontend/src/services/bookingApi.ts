@@ -51,7 +51,7 @@ export const bookingApi = {
   // Search bookings with filters
   search: async (params: BookingSearchParams = {}) => {
     const { 
-      hotelId, 
+      branchId, 
       customerId, 
       status,
       page = 0, 
@@ -64,7 +64,7 @@ export const bookingApi = {
       `${BOOKING_BASE_URL}/search`,
       { 
         params: { 
-          hotelId, 
+          branchId, 
           customerId, 
           status,
           page, 
@@ -135,6 +135,36 @@ export const bookingApi = {
     const response = await axiosClient.post<ApiResponse<Booking>>(
       `${BOOKING_BASE_URL}/checkout`,
       data
+    );
+    return response.data;
+  },
+
+  // Check-in booking
+  checkIn: async (id: string, checkedInBy: string) => {
+    const response = await axiosClient.post<ApiResponse<Booking>>(
+      `${BOOKING_BASE_URL}/${id}/check-in`,
+      null,
+      { params: { checkedInBy } }
+    );
+    return response.data;
+  },
+
+  // Check-out booking
+  checkOut: async (id: string, checkedOutBy: string) => {
+    const response = await axiosClient.post<ApiResponse<Booking>>(
+      `${BOOKING_BASE_URL}/${id}/check-out`,
+      null,
+      { params: { checkedOutBy } }
+    );
+    return response.data;
+  },
+
+  // Mark booking as no-show
+  markNoShow: async (id: string, reason: string) => {
+    const response = await axiosClient.post<ApiResponse<Booking>>(
+      `${BOOKING_BASE_URL}/${id}/no-show`,
+      null,
+      { params: { reason } }
     );
     return response.data;
   },
