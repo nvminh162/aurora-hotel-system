@@ -328,7 +328,7 @@ export default function CustomerProfilePage() {
                         <h3 className="text-xl font-bold text-gray-900 mb-2">Chưa có đặt phòng</h3>
                         <p className="text-gray-600 mb-6">Bạn chưa có lịch sử đặt phòng nào</p>
                         <Button
-                          onClick={() => window.location.href = `/booking/${booking.id}`}
+                          onClick={() => window.location.href = `/`}
                           className="text-white"
                           style={{ backgroundColor: 'oklch(0.702 0.078 56.8)' }}
                           onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = 'oklch(0.652 0.078 56.8)')}
@@ -346,7 +346,7 @@ export default function CustomerProfilePage() {
                           return (
                             <div
                               key={booking.id}
-                              onClick={() => window.location.href = `/booking/${booking.id}`}
+                              onClick={() => window.location.href = `/landing/checkout/user-booking-detail/${booking.id}`}
                               className="bg-white border border-gray-200 rounded-lg p-5 hover:shadow-md hover:border-green-300 transition-all cursor-pointer"
                             >
                               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
