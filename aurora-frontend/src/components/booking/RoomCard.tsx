@@ -11,6 +11,7 @@ interface RoomCardProps {
   room: Room;
   roomType: RoomType;
   isSelected?: boolean;
+  isAvailable?: boolean; // Whether room is available for the selected dates
   onSelect?: (room: Room, roomType: RoomType) => void;
   onViewImages?: (room: Room) => void;
   showActionButton?: boolean;
@@ -24,6 +25,7 @@ export default function RoomCard({
   room,
   roomType,
   isSelected = false,
+  isAvailable = true, // Default to true for backward compatibility
   onSelect,
   onViewImages,
   showActionButton = true,
@@ -167,10 +169,14 @@ export default function RoomCard({
                     ? () => onSelect(room, roomType)
                     : undefined
                 }
-                disabled={isSelected && actionButtonVariant === "select"}
+                disabled={
+                  !isAvailable || (isSelected && actionButtonVariant === "select")
+                }
                 className={
                   actionButtonVariant === "select"
-                    ? isSelected
+                    ? !isAvailable
+                      ? "bg-red-400 hover:bg-red-400 cursor-not-allowed"
+                      : isSelected
                       ? "bg-gray-400 hover:bg-gray-400 cursor-not-allowed"
                       : "bg-amber-600 hover:bg-amber-700"
                     : actionButtonVariant === "service"
@@ -178,12 +184,14 @@ export default function RoomCard({
                     : "bg-primary hover:bg-primary/90"
                 }
               >
-                {actionButtonText ||
-                  (actionButtonVariant === "service"
-                    ? "Chọn dịch vụ"
-                    : isSelected
-                    ? "Đã chọn"
-                    : "Chọn phòng")}
+                {!isAvailable
+                  ? "Đã được đặt"
+                  : actionButtonText ||
+                    (actionButtonVariant === "service"
+                      ? "Chọn dịch vụ"
+                      : isSelected
+                      ? "Đã chọn"
+                      : "Chọn phòng")}
               </Button>
             )}
           </div>
