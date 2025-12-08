@@ -334,7 +334,27 @@ const BookingUpdatePage = () => {
       sb.id === serviceBookingId ? { ...sb, ...updates } : sb
     ));
 
-    // Track change
+    // If this is a temporary service booking (not yet created), update the 'add' action instead
+    if (serviceBookingId.startsWith('temp-')) {
+      const serviceBooking = serviceBookings.find(sb => sb.id === serviceBookingId);
+      if (serviceBooking) {
+        // Update the 'add' action with new values
+        setServiceChanges(prev => prev.map(sc => {
+          if (sc.action === 'add' && sc.serviceId === serviceBooking.serviceId && sc.roomId === serviceBooking.roomId) {
+            return {
+              ...sc,
+              quantity: updates.quantity !== undefined ? updates.quantity : sc.quantity,
+              price: updates.price !== undefined ? updates.price : sc.price,
+              dateTime: updates.dateTime || sc.dateTime,
+            };
+          }
+          return sc;
+        }));
+      }
+      return; // Don't track update for temp service bookings
+    }
+
+    // Track change for existing service bookings
     const existingChange = serviceChanges.find(sc => sc.serviceBookingId === serviceBookingId);
     if (existingChange && existingChange.action === 'update') {
       setServiceChanges(prev => prev.map(sc => 
@@ -445,10 +465,6 @@ const BookingUpdatePage = () => {
       for (const change of serviceChanges) {
         try {
           if (change.action === 'add' && change.serviceId && change.roomId) {
-            if (!booking.customerId) {
-              throw new Error('Không thể thêm dịch vụ: Booking không có customer');
-            }
-            
             // Validate required fields
             const servicePrice = change.price && change.price > 0 ? change.price : undefined;
             const serviceQuantity = change.quantity && change.quantity > 0 ? change.quantity : 1;
@@ -482,14 +498,20 @@ const BookingUpdatePage = () => {
           } else if (change.action === 'delete' && change.serviceBookingId) {
             await serviceBookingApi.delete(change.serviceBookingId);
           } else if (change.action === 'update' && change.serviceBookingId) {
+            // Skip update for temporary service bookings (they should be created, not updated)
+            if (change.serviceBookingId.startsWith('temp-')) {
+              console.warn('Skipping update for temporary service booking:', change.serviceBookingId);
+              continue;
+            }
+            
             const serviceBooking = serviceBookings.find(sb => sb.id === change.serviceBookingId);
             if (serviceBooking) {
               // Update service booking - include roomId if it was changed
               const updateData: any = {
-                dateTime: serviceBooking.dateTime,
-                quantity: serviceBooking.quantity,
-                price: serviceBooking.price,
-                status: serviceBooking.status,
+                dateTime: change.dateTime || serviceBooking.dateTime,
+                quantity: change.quantity !== undefined ? change.quantity : serviceBooking.quantity,
+                price: change.price !== undefined ? change.price : serviceBooking.price,
+                status: change.status || serviceBooking.status,
               };
               
               // Include roomId if it was changed
@@ -498,6 +520,8 @@ const BookingUpdatePage = () => {
               }
               
               await serviceBookingApi.update(change.serviceBookingId, updateData);
+            } else {
+              console.warn('Service booking not found for update:', change.serviceBookingId);
             }
           }
         } catch (error: any) {

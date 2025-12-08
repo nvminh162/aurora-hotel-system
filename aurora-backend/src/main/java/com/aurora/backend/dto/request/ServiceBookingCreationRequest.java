@@ -20,7 +20,7 @@ public class ServiceBookingCreationRequest {
     @NotBlank(message = "SERVICE_ID_REQUIRED")
     String serviceId;
     
-    @NotBlank(message = "CUSTOMER_ID_REQUIRED")
+    // Customer ID is optional - will use booking's customer if not provided
     String customerId;
     
     @NotBlank(message = "ROOM_ID_REQUIRED")

@@ -177,7 +177,9 @@ public class PromotionServiceImpl implements PromotionService {
 
     @Override
     public Page<PromotionResponse> getActivePromotions(Pageable pageable) {
-        Page<Promotion> promotionPage = promotionRepository.findByActive(true, pageable);
+        // Filter by active status AND valid date range (not expired)
+        LocalDate today = LocalDate.now();
+        Page<Promotion> promotionPage = promotionRepository.findActiveAndValidPromotions(today, pageable);
         return promotionPage.map(promotionMapper::toPromotionResponse);
     }
 

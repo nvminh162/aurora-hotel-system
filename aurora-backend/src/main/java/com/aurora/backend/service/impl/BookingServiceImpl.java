@@ -16,6 +16,7 @@ import com.aurora.backend.entity.Service;
 import com.aurora.backend.entity.BookingRoom;
 import com.aurora.backend.entity.ServiceBooking;
 import com.aurora.backend.entity.Payment;
+import com.aurora.backend.entity.Promotion;
 import com.aurora.backend.exception.AppException;
 import com.aurora.backend.enums.ErrorCode;
 import com.aurora.backend.mapper.BookingMapper;
@@ -30,9 +31,11 @@ import com.aurora.backend.repository.ServiceRepository;
 import com.aurora.backend.repository.BookingRoomRepository;
 import com.aurora.backend.repository.ServiceBookingRepository;
 import com.aurora.backend.repository.PaymentRepository;
+import com.aurora.backend.repository.PromotionRepository;
 import com.aurora.backend.service.BookingService;
 import com.aurora.backend.service.EmailService;
 import com.aurora.backend.service.RefundService;
+import com.aurora.backend.service.PriceCalculationService;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -65,10 +68,12 @@ public class BookingServiceImpl implements BookingService {
     BookingRoomRepository bookingRoomRepository;
     ServiceBookingRepository serviceBookingRepository;
     PaymentRepository paymentRepository;
+    PromotionRepository promotionRepository;
     BookingMapper bookingMapper;
     ServiceBookingMapper serviceBookingMapper;
     RefundService refundService;
     EmailService emailService;
+    PriceCalculationService priceCalculationService;
 
     @Override
     @Transactional
@@ -560,9 +565,72 @@ public class BookingServiceImpl implements BookingService {
             }
         }
         
+        // Calculate subtotal (rooms + services)
+        BigDecimal subtotal = roomsSubtotal.add(servicesTotal);
         booking.setSubtotalPrice(roomsSubtotal);
-        booking.setTotalPrice(roomsSubtotal.add(servicesTotal));
-        booking.setDiscountAmount(BigDecimal.ZERO);
+        
+        // Handle promotion if provided
+        BigDecimal discountAmount = BigDecimal.ZERO;
+        Promotion appliedPromotion = null;
+        
+        if (request.getPromotionId() != null && !request.getPromotionId().trim().isEmpty()) {
+            try {
+                appliedPromotion = promotionRepository.findById(request.getPromotionId())
+                        .orElse(null);
+                
+                if (appliedPromotion != null) {
+                    // Validate promotion
+                    LocalDate today = LocalDate.now();
+                    boolean isValid = appliedPromotion.getActive() != null && appliedPromotion.getActive()
+                            && (today.isEqual(appliedPromotion.getStartAt()) || today.isAfter(appliedPromotion.getStartAt()))
+                            && (today.isEqual(appliedPromotion.getEndAt()) || today.isBefore(appliedPromotion.getEndAt()));
+                    
+                    // Check branch match (null = all branches)
+                    if (isValid && appliedPromotion.getBranch() != null) {
+                        isValid = appliedPromotion.getBranch().getId().equals(branch.getId());
+                    }
+                    
+                    // Check minimum booking amount
+                    if (isValid && appliedPromotion.getMinBookingAmount() != null) {
+                        isValid = subtotal.compareTo(appliedPromotion.getMinBookingAmount()) >= 0;
+                    }
+                    
+                    // Check minimum nights
+                    if (isValid && appliedPromotion.getMinNights() != null) {
+                        isValid = request.getNights() >= appliedPromotion.getMinNights();
+                    }
+                    
+                    // Check usage limit
+                    if (isValid && appliedPromotion.getUsageLimit() != null) {
+                        isValid = appliedPromotion.getUsedCount() < appliedPromotion.getUsageLimit();
+                    }
+                    
+                    if (isValid) {
+                        // Calculate discount
+                        discountAmount = priceCalculationService.calculateDiscount(appliedPromotion, subtotal);
+                        booking.setAppliedPromotion(appliedPromotion);
+                        booking.setDiscountAmount(discountAmount);
+                        
+                        // Increment used count
+                        appliedPromotion.setUsedCount(appliedPromotion.getUsedCount() + 1);
+                        promotionRepository.save(appliedPromotion);
+                        
+                        log.info("Promotion applied: {} - Discount: {}", 
+                                appliedPromotion.getCode(), discountAmount);
+                    } else {
+                        log.warn("Promotion {} is not valid for this booking", request.getPromotionId());
+                    }
+                } else {
+                    log.warn("Promotion not found: {}", request.getPromotionId());
+                }
+            } catch (Exception e) {
+                log.error("Error applying promotion: {}", e.getMessage(), e);
+            }
+        }
+        
+        // Calculate final total (subtotal - discount)
+        BigDecimal totalPrice = subtotal.subtract(discountAmount);
+        booking.setTotalPrice(totalPrice);
         
         // Set payment status based on payment method
         if ("cash".equals(request.getPaymentMethod())) {
@@ -630,7 +698,7 @@ public class BookingServiceImpl implements BookingService {
                         .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_FOUND));
                 
                 BigDecimal pricePerUnit = BigDecimal.valueOf(serviceReq.getPrice());
-                BigDecimal totalPrice = pricePerUnit.multiply(BigDecimal.valueOf(serviceReq.getQuantity()));
+                BigDecimal serviceTotalPrice = pricePerUnit.multiply(BigDecimal.valueOf(serviceReq.getQuantity()));
                 
                 // Use check-in date as service date time (can be adjusted later)
                 LocalDateTime serviceDateTime = request.getCheckIn().atStartOfDay();
@@ -647,7 +715,7 @@ public class BookingServiceImpl implements BookingService {
                         .serviceDateTime(serviceDateTime)
                         .quantity(serviceReq.getQuantity())
                         .pricePerUnit(pricePerUnit)
-                        .totalPrice(totalPrice)
+                        .totalPrice(serviceTotalPrice)
                         .status(ServiceBooking.ServiceBookingStatus.PENDING)
                         .build();
                 

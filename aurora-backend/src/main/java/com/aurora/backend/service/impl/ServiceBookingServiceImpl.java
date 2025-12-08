@@ -51,12 +51,24 @@ public class ServiceBookingServiceImpl implements ServiceBookingService {
         Service service = serviceRepository.findById(request.getServiceId())
                 .orElseThrow(() -> new AppException(ErrorCode.SERVICE_NOT_FOUND));
         
-        User customer = userRepository.findById(request.getCustomerId())
-                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
-        
-        if (serviceBookingRepository.existsByBookingAndService(booking, service)) {
-            throw new AppException(ErrorCode.SERVICE_BOOKING_EXISTED);
+        // Determine customer: use provided customerId, or booking's customer, or null for walk-in guests
+        User customer = null;
+        if (request.getCustomerId() != null && !request.getCustomerId().trim().isEmpty()) {
+            // Use provided customer ID
+            customer = userRepository.findById(request.getCustomerId())
+                    .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_FOUND));
+        } else if (booking.getCustomer() != null) {
+            // Use booking's customer
+            customer = booking.getCustomer();
+            log.info("Using booking's customer: {}", customer.getUsername());
+        } else {
+            // Booking has no customer (walk-in guest) - allow service booking without customer
+            log.info("Booking has no customer (walk-in guest) - creating service booking without customer");
         }
+        
+        // Note: We allow multiple service bookings for the same service in a booking
+        // (e.g., same service for different rooms, different times, or different quantities)
+        // Removed duplicate check: if (serviceBookingRepository.existsByBookingAndService(booking, service))
         
         // Load and set room - REQUIRED for booking services
         Room room = roomRepository.findById(request.getRoomId())
