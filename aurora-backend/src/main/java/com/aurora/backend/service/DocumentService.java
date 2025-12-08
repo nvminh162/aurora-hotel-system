@@ -25,8 +25,8 @@ public class DocumentService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public Document uploadFile(MultipartFile file, Boolean shouldEmbed) throws IOException {
-        log.info("Uploading file: {}, shouldEmbed: {}", file.getOriginalFilename(), shouldEmbed);
+    public Document uploadFile(MultipartFile file, Boolean shouldEmbed, String description) throws IOException {
+        log.info("Uploading file: {}, shouldEmbed: {}, description: {}", file.getOriginalFilename(), shouldEmbed, description);
 
         // Upload to Cloudinary
         CompletableFuture<Map<String, Object>> cloudinaryUploadFuture = CompletableFuture.supplyAsync(() -> {
@@ -50,6 +50,7 @@ public class DocumentService {
                 .docUrl(docUrl)
                 .publicId(publicId)
                 .isEmbed(shouldEmbed != null ? shouldEmbed : false)
+                .description(description)
                 .build();
 
         Document savedDocument = documentRepository.save(document);
@@ -81,7 +82,7 @@ public class DocumentService {
     }
 
     @Transactional
-    public Document updateFile(String id, MultipartFile newFile, Boolean shouldEmbed) throws IOException {
+    public Document updateFile(String id, MultipartFile newFile, Boolean shouldEmbed, String description) throws IOException {
         Document document = documentRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Document not found"));
 
@@ -113,6 +114,7 @@ public class DocumentService {
         document.setDocUrl(docUrl);
         document.setPublicId(publicId);
         document.setIsEmbed(shouldEmbed != null ? shouldEmbed : false);
+        document.setDescription(description);
         document.setTotalChunks(null);
         document.setMetadata(null);
 
@@ -158,6 +160,50 @@ public class DocumentService {
 
         documentRepository.deleteById(id);
         log.info("Deleted document: {} (ID: {})", document.getFilename(), id);
+    }
+
+    @Transactional
+    public Document updateMetadata(String id, String description, Boolean shouldEmbed) {
+        Document document = documentRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Document not found"));
+
+        // Update description if provided
+        if (description != null) {
+            document.setDescription(description);
+        }
+
+        // Update shouldEmbed if provided and different from current state
+        if (shouldEmbed != null && !shouldEmbed.equals(document.getIsEmbed())) {
+            if (Boolean.TRUE.equals(shouldEmbed)) {
+                // Need to embed the document
+                document.setIsEmbed(true);
+                CompletableFuture.runAsync(() -> {
+                    try {
+                        byte[] fileBytes = downloadFileFromCloudinary(document.getDocUrl());
+                        EmbeddingService.EmbeddingResult result = embeddingService.indexFile(document, fileBytes);
+                        updateDocumentMetadata(document.getId(), result.getMetadata());
+                        updateDocumentChunks(document.getId(), result.getTotalChunks());
+                        log.info("Successfully embedded document: {}", document.getFilename());
+                    } catch (Exception e) {
+                        log.error("Failed to embed document {}: {}", document.getFilename(), e.getMessage(), e);
+                    }
+                });
+            } else {
+                // Need to remove embedding
+                if (Boolean.TRUE.equals(document.getIsEmbed())) {
+                    try {
+                        embeddingService.deleteFileEmbeddings(id);
+                    } catch (Exception e) {
+                        log.warn("Failed to delete embeddings: {}", e.getMessage());
+                    }
+                }
+                document.setIsEmbed(false);
+                document.setTotalChunks(null);
+                document.setMetadata(null);
+            }
+        }
+
+        return documentRepository.save(document);
     }
 
     @Transactional
@@ -239,7 +285,7 @@ public class DocumentService {
     }
 
     @Transactional
-    public void loadFileFromBytes(String filename, String contentType, byte[] fileBytes, Boolean shouldEmbed) throws IOException {
+    public void loadFileFromBytes(String filename, String contentType, byte[] fileBytes, String description, Boolean shouldEmbed) throws IOException {
         // Upload to Cloudinary
         Map<String, Object> uploadResult = uploadBytesToCloudinary(fileBytes, filename);
         String docUrl = (String) uploadResult.get("secure_url");
@@ -251,6 +297,7 @@ public class DocumentService {
                 .size((long) fileBytes.length)
                 .docUrl(docUrl)
                 .publicId(publicId)
+                .description(description)
                 .isEmbed(shouldEmbed != null ? shouldEmbed : false)
                 .build();
 

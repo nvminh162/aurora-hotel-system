@@ -38,4 +38,7 @@ public class Document extends BaseEntity {
     
     @Column(columnDefinition = "TEXT")
     String metadata;
+    
+    @Column(columnDefinition = "TEXT")
+    String description;
 }

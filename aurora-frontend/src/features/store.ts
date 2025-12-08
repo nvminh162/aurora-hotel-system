@@ -16,6 +16,7 @@ import branchReducer from "./slices/branchSlice";
 import ragReducer from "./slices/ragSlice";
 import shiftReducer from "./slices/shiftSlice";
 import newsReducer from "./slices/newsSlice";
+import documentReducer from "./slices/documentSlice";
 
 const rootReducer = combineReducers({
   language: languageReducer,
@@ -24,6 +25,7 @@ const rootReducer = combineReducers({
   rag: ragReducer,
   shift: shiftReducer,
   news: newsReducer,
+  document: documentReducer,
 });
 
 const persistConfig = {

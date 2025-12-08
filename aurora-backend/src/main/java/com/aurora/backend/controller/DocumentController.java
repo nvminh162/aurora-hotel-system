@@ -25,11 +25,12 @@ public class DocumentController {
     @PostMapping("/upload")
     public ResponseEntity<ApiResponse<Document>> uploadFile(
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "shouldEmbed", required = false, defaultValue = "false") Boolean shouldEmbed
+            @RequestParam(value = "shouldEmbed", required = false, defaultValue = "false") Boolean shouldEmbed,
+            @RequestParam(value = "description", required = false) String description
     ) throws IOException {
-        log.info("Request to upload document: filename={}, shouldEmbed={}", file.getOriginalFilename(), shouldEmbed);
+        log.info("Request to upload document: filename={}, shouldEmbed={}, description={}", file.getOriginalFilename(), shouldEmbed, description);
 
-        Document document = documentService.uploadFile(file, shouldEmbed);
+        Document document = documentService.uploadFile(file, shouldEmbed, description);
 
         return ResponseEntity.ok(
                 ApiResponse.<Document>builder()
@@ -71,15 +72,34 @@ public class DocumentController {
     public ResponseEntity<ApiResponse<Document>> updateFile(
             @PathVariable String id,
             @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "shouldEmbed", required = false, defaultValue = "false") Boolean shouldEmbed
+            @RequestParam(value = "shouldEmbed", required = false, defaultValue = "false") Boolean shouldEmbed,
+            @RequestParam(value = "description", required = false) String description
     ) throws IOException {
-        log.info("Request to update document: id={}, filename={}, shouldEmbed={}", id, file.getOriginalFilename(), shouldEmbed);
+        log.info("Request to update document: id={}, filename={}, shouldEmbed={}, description={}", id, file.getOriginalFilename(), shouldEmbed, description);
 
-        Document document = documentService.updateFile(id, file, shouldEmbed);
+        Document document = documentService.updateFile(id, file, shouldEmbed, description);
 
         return ResponseEntity.ok(
                 ApiResponse.<Document>builder()
                         .message("Document updated successfully")
+                        .result(document)
+                        .build()
+        );
+    }
+
+    @PostMapping("/{id}/metadata")
+    public ResponseEntity<ApiResponse<Document>> updateMetadata(
+            @PathVariable String id,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam(value = "shouldEmbed", required = false) Boolean shouldEmbed
+    ) {
+        log.info("Request to update document metadata: id={}, description={}, shouldEmbed={}", id, description, shouldEmbed);
+
+        Document document = documentService.updateMetadata(id, description, shouldEmbed);
+
+        return ResponseEntity.ok(
+                ApiResponse.<Document>builder()
+                        .message("Document metadata updated successfully")
                         .result(document)
                         .build()
         );

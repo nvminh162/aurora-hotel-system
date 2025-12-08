@@ -2,16 +2,17 @@
 import React, { useState, useCallback, useRef, useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import DocViewer, { DocViewerRenderers } from "@cyntler/react-doc-viewer"
-import { ArrowLeft, Upload, FileText, Eye, Trash2 } from "lucide-react"
-import type { DocumentItem } from "@/features/documents/data"
-import { mockDocuments } from "@/features/documents/data"
+import { Upload, FileText, Eye, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { PageHeader } from "@/components/custom"
+import { useAppDispatch, useAppSelector } from "@/hooks/useRedux"
+import { fetchDocumentById, uploadNewDocument, updateExistingDocument, updateDocumentMetadataOnly, clearCurrentDocument } from "@/features/slices/documentSlice"
 
 const ACCEPTED_EXTENSIONS = [
   "pdf",
@@ -21,30 +22,16 @@ const ACCEPTED_EXTENSIONS = [
 
 const ACCEPT_ATTRIBUTE = ACCEPTED_EXTENSIONS.map((ext) => `.${ext}`).join(",")
 
-const DOCUMENT_CATEGORIES = [
-  { value: "operations", label: "Vận hành" },
-  { value: "policy", label: "Chính sách" },
-  { value: "training", label: "Đào tạo" },
-  { value: "financial", label: "Tài chính" },
-  { value: "legal", label: "Pháp lý" },
-  { value: "marketing", label: "Marketing" },
-  { value: "other", label: "Khác" },
-]
-
 type MetadataState = {
   title: string
-  category: string
   owner: string
   description: string
-  tags: string
 }
 
 const DEFAULT_METADATA: MetadataState = {
   title: "",
-  category: "operations",
   owner: "Admin User", // Mặc định là người dùng hiện tại
   description: "",
-  tags: "",
 }
 
 type FileInfo = {
@@ -58,41 +45,49 @@ type FileInfo = {
 
 export default function DocumentUpsertPage() {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const [searchParams] = useSearchParams()
   const docId = searchParams.get("docId")
   const isEditing = Boolean(docId)
   
+  const { currentDocument, loading, uploadProgress } = useAppSelector((state) => state.document)
+  
   const [metadata, setMetadata] = useState<MetadataState>(DEFAULT_METADATA)
   const [fileInfo, setFileInfo] = useState<FileInfo | null>(null)
-  const [existingDocument, setExistingDocument] = useState<DocumentItem | null>(null)
+  const [shouldEmbed, setShouldEmbed] = useState(false)
 
   // Load existing document data when editing
   useEffect(() => {
     if (isEditing && docId) {
-      const document = mockDocuments.find(doc => doc.id === docId)
-      if (document) {
-        setExistingDocument(document)
-        setMetadata({
-          title: document.name.replace(/\.[^/.]+$/, ""),
-          category: "operations", // Default since not in DocumentItem
-          owner: document.owner,
-          description: "", // Default since not in DocumentItem
-          tags: "", // Default since not in DocumentItem
-        })
-        // For editing, we show the existing document preview
-        setFileInfo({
-          file: new File([], document.name), // Placeholder file
-          name: document.name,
-          size: document.size,
-          type: document.extension,
-          url: document.url,
-          // For existing documents, we'll use uri instead of fileData
-        })
-      }
+      dispatch(fetchDocumentById(docId))
     }
-  }, [isEditing, docId])
+    
+    return () => {
+      dispatch(clearCurrentDocument())
+    }
+  }, [isEditing, docId, dispatch])
+
+  // Populate form when document is loaded
+  useEffect(() => {
+    if (currentDocument) {
+      setMetadata({
+        title: currentDocument.filename.replace(/\.[^/.]+$/, ""),
+        owner: currentDocument.createdBy || "Unknown",
+        description: currentDocument.description || "",
+      })
+      setShouldEmbed(currentDocument.isEmbed)
+      // For editing, show existing document preview
+      setFileInfo({
+        file: new File([], currentDocument.filename),
+        name: currentDocument.filename,
+        size: formatFileSize(currentDocument.size),
+        type: currentDocument.fileType,
+        url: currentDocument.docUrl,
+      })
+    }
+  }, [currentDocument])
+  
   const [isDragOver, setIsDragOver] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
   const [isFileLoading, setIsFileLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
@@ -142,17 +137,20 @@ export default function DocumentUpsertPage() {
       setFileInfo(newFileInfo)
       
       // Auto-fill title from filename if empty
-      if (!metadata.title) {
-        const nameWithoutExtension = file.name.replace(/\.[^/.]+$/, "")
-        setMetadata(prev => ({ ...prev, title: nameWithoutExtension }))
-      }
+      setMetadata(prev => {
+        if (!prev.title) {
+          const nameWithoutExtension = file.name.replace(/\.[^/.]+$/, "")
+          return { ...prev, title: nameWithoutExtension }
+        }
+        return prev
+      })
     } catch (error) {
       console.error('Error reading file:', error)
       alert('Không thể đọc file. Vui lòng thử lại với file khác.')
     } finally {
       setIsFileLoading(false)
     }
-  }, [metadata.title, isFileSupported])
+  }, [isFileSupported])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -197,31 +195,52 @@ export default function DocumentUpsertPage() {
 
   const handleSubmit = async () => {
     if (!fileInfo && !isEditing) {
-      alert("Vui lòng chọn file để tải lên")
+      toast.error("Vui lòng chọn file để tải lên")
       return
     }
 
     if (!metadata.title.trim()) {
-      alert("Vui lòng nhập tiêu đề tài liệu")
+      toast.error("Vui lòng nhập tiêu đề tài liệu")
       return
     }
 
-    setIsLoading(true)
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
-      
-      console.log("Document metadata:", metadata)
-      console.log("File info:", fileInfo)
-      console.log("Existing document:", existingDocument)
-      
-      alert(isEditing ? "Cập nhật tài liệu thành công!" : "Tải lên tài liệu thành công!")
+      if (isEditing && docId) {
+        // If editing and no new file selected, just update metadata
+        if (!fileInfo?.file?.size) {
+          await dispatch(updateDocumentMetadataOnly({ 
+            id: docId, 
+            description: metadata.description,
+            shouldEmbed 
+          })).unwrap()
+          toast.success('Cập nhật thông tin tài liệu thành công!')
+        } else {
+          // If new file is selected, update with file
+          await dispatch(updateExistingDocument({ 
+            id: docId, 
+            file: fileInfo.file, 
+            shouldEmbed,
+            description: metadata.description 
+          })).unwrap()
+          toast.success('Cập nhật tài liệu thành công!')
+        }
+      } else {
+        // Creating new document
+        if (!fileInfo?.file?.size) {
+          toast.error("File không hợp lệ")
+          return
+        }
+        await dispatch(uploadNewDocument({ 
+          file: fileInfo.file, 
+          shouldEmbed,
+          description: metadata.description 
+        })).unwrap()
+        toast.success('Tải lên tài liệu thành công!')
+      }
       navigate("/admin/documents")
     } catch (error) {
-      alert("Có lỗi xảy ra. Vui lòng thử lại!")
-      console.error(error)
-    } finally {
-      setIsLoading(false)
+      console.error('Failed to save document:', error)
+      toast.error("Có lỗi xảy ra. Vui lòng thử lại!")
     }
   }
 
@@ -240,39 +259,30 @@ export default function DocumentUpsertPage() {
   ] : []
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-slate-50 via-white to-slate-100 py-4">
-      <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4">
-        {/* Header */}
-        <header className="space-y-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate("/admin/documents")}
-            className="flex items-center gap-2 mb-6"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Quay lại
-          </Button>
-          <div className="flex items-center gap-3">
-            <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.3em] text-primary/80">
-                Document Hub
-              </p>
-              <h1 className="text-3xl font-bold text-slate-900">
-                {isEditing ? "Chỉnh sửa tài liệu" : "Thêm tài liệu mới"}
-              </h1>
-            </div>
-          </div>
-        </header>
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate("/admin/documents")}
+          className="mb-2"
+        >
+          ← Quay lại
+        </Button>
+        <PageHeader
+          title={isEditing ? "Chỉnh sửa tài liệu" : "Thêm tài liệu mới"}
+          description={isEditing ? "Cập nhật thông tin tài liệu" : "Tải lên và quản lý tài liệu mới"}
+        />
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Left Column - File Upload & Metadata */}
           <div className="space-y-6">
             {/* File Upload Area */}
             {!fileInfo && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <CardTitle className="flex items-center gap-2 text-lg font-medium">
                     <Upload className="h-5 w-5" />
                     Tải lên tài liệu
                   </CardTitle>
@@ -313,7 +323,7 @@ export default function DocumentUpsertPage() {
             {fileInfo && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center justify-between">
+                  <CardTitle className="flex items-center justify-between text-lg font-medium">
                     <div className="flex items-center gap-2">
                       <FileText className="h-5 w-5" />
                       Thông tin file
@@ -322,7 +332,7 @@ export default function DocumentUpsertPage() {
                       variant="outline"
                       size="sm"
                       onClick={handleClearFile}
-                      className="flex items-center gap-2 text-red-400"
+                      className="flex items-center gap-2 text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
                       Xóa file
@@ -349,36 +359,17 @@ export default function DocumentUpsertPage() {
             {/* Metadata Form */}
             <Card>
               <CardHeader>
-                <CardTitle>Thông tin tài liệu</CardTitle>
+                <CardTitle className="text-lg font-medium">Thông tin tài liệu</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Tiêu đề <span className="text-red-400">*</span></Label>
+                  <Label htmlFor="title">Tiêu đề <span className="text-destructive">*</span></Label>
                   <Input
                     id="title"
                     value={metadata.title}
                     onChange={(e) => handleMetadataChange("title", e.target.value)}
                     placeholder="Nhập tiêu đề tài liệu"
                   />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="category">Loại tài liệu</Label>
-                  <Select
-                    value={metadata.category}
-                    onValueChange={(value) => handleMetadataChange("category", value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Chọn loại tài liệu" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {DOCUMENT_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat.value} value={cat.value}>
-                          {cat.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -392,16 +383,6 @@ export default function DocumentUpsertPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="tags">Tags</Label>
-                  <Input
-                    id="tags"
-                    value={metadata.tags}
-                    onChange={(e) => handleMetadataChange("tags", e.target.value)}
-                    placeholder="Nhập tags, ngăn cách bởi dấu phẩy"
-                  />
-                </div>
-
-                <div className="space-y-2">
                   <Label htmlFor="description">Mô tả</Label>
                   <Textarea
                     id="description"
@@ -411,6 +392,19 @@ export default function DocumentUpsertPage() {
                     rows={4}
                   />
                 </div>
+
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="shouldEmbed"
+                    checked={shouldEmbed}
+                    onChange={(e) => setShouldEmbed(e.target.checked)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label htmlFor="shouldEmbed" className="cursor-pointer">
+                    Lập chỉ mục cho RAG (Tìm kiếm ngữ nghĩa)
+                  </Label>
+                </div>
               </CardContent>
             </Card>
 
@@ -418,11 +412,11 @@ export default function DocumentUpsertPage() {
             <div className="flex gap-3">
               <Button
                 onClick={handleSubmit}
-                disabled={isLoading}
+                disabled={loading}
                 className="flex-1"
               >
-                {isLoading ? (
-                  "Đang xử lý..."
+                {loading ? (
+                  uploadProgress > 0 ? `Đang tải lên... ${uploadProgress}%` : "Đang xử lý..."
                 ) : (
                   isEditing ? "Cập nhật tài liệu" : "Tải lên tài liệu"
                 )}
@@ -430,7 +424,7 @@ export default function DocumentUpsertPage() {
               <Button
                 variant="outline"
                 onClick={() => navigate("/admin/documents")}
-                disabled={isLoading}
+                disabled={loading}
               >
                 Hủy
               </Button>
@@ -441,7 +435,7 @@ export default function DocumentUpsertPage() {
           <div className="space-y-6">
             <Card className="h-fit">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-lg font-medium">
                   <Eye className="h-5 w-5" />
                   Xem trước tài liệu
                 </CardTitle>
@@ -499,6 +493,5 @@ export default function DocumentUpsertPage() {
           </div>
         </div>
       </div>
-    </div>
-  )
-}
+    )
+  }

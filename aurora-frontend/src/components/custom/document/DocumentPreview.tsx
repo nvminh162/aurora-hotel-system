@@ -48,7 +48,7 @@ export const DocumentPreview = ({
   const canPreview =
     !!document && previewableExtensions.has(document.extension.toLowerCase());
   const viewerDocuments = document
-    ? [{ uri: document.url, fileType: document.extension }]
+    ? [{ uri: document.url, fileName: document.name, fileType: document.extension }]
     : [];
 
   return (
@@ -83,11 +83,20 @@ export const DocumentPreview = ({
               <div className="space-y-4 p-4 pb-24">
                 <div className="rounded-xl border bg-white/90 p-3 shadow-inner">
                   {canPreview ? (
-                    <DocViewer
-                      documents={viewerDocuments}
-                      pluginRenderers={DocViewerRenderers}
-                      className="h-[420px] overflow-hidden rounded-lg"
-                    />
+                    <div style={{ height: "420px" }}>
+                      <DocViewer
+                        documents={viewerDocuments}
+                        pluginRenderers={DocViewerRenderers}
+                        config={{
+                          header: {
+                            disableHeader: false,
+                            disableFileName: false,
+                            retainURLParams: false,
+                          },
+                        }}
+                        style={{ height: "100%" }}
+                      />
+                    </div>
                   ) : (
                     <PreviewFallback extension={document.extension} />
                   )}
@@ -115,6 +124,14 @@ export const DocumentPreview = ({
                         {formatUpdatedAt(document.updatedAt)}
                       </dd>
                     </div>
+                    {document.description && (
+                      <div className="flex flex-col gap-1 pt-2 border-t">
+                        <dt className="text-muted-foreground">Mô tả</dt>
+                        <dd className="font-medium text-sm">
+                          {document.description}
+                        </dd>
+                      </div>
+                    )}
                   </dl>
                 </div>
               </div>
@@ -122,7 +139,10 @@ export const DocumentPreview = ({
 
             <SheetFooter className="border-t bg-white shrink-0 mt-auto">
               <div className="flex w-full flex-col gap-2 sm:flex-row">
-                <Button className="w-1/2 gap-2">
+                <Button
+                  className="w-1/2 gap-2"
+                  onClick={() => window.open(document.url, "_blank")}
+                >
                   <Download className="size-4" />
                   Tải xuống
                 </Button>
@@ -155,9 +175,9 @@ const PreviewFallback = ({ extension }: { extension: string }) => {
     defaultStyles[
       DEFAULT_STYLE_KEYS.includes(normalized as DefaultExtensionType)
         ? (normalized as DefaultExtensionType)
-        : normalized === "pdf"
+        : (normalized === "pdf" || normalized === 'application/pdf')
         ? "pdf"
-        : "doc"
+        : "docx"
     ];
   return (
     <div className="flex h-[420px] flex-col items-center justify-center gap-4 text-center text-muted-foreground">
