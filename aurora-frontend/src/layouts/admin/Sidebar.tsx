@@ -37,8 +37,11 @@ const menuItems = [
   {
     title: "Bookings",
     icon: CalendarCheck,
-    href: "/admin/booking",
-    children: [{ title: "Booking List", href: "/admin/booking" }],
+    href: '/admin/bookings',
+    children: [
+      { title: 'Booking List', href: '/admin/bookings' },
+      { title: 'Booking', href: '/admin/booking' },
+    ],
   },
   // ===== Kế thừa từ Manager =====
   {
@@ -46,15 +49,19 @@ const menuItems = [
     icon: BedDouble,
     href: "/admin/rooms",
     children: [
-      { title: "Room Categories", href: "/admin/room-categories" },
-      { title: "Room List", href: "/admin/rooms" },
-      { title: "Room Types", href: "/admin/room-types" },
+      { title: 'Room Categories', href: '/admin/room-categories' },
+      { title: 'Room Types', href: '/admin/room-types' },
+      { title: 'Room List', href: '/admin/rooms' },
     ],
   },
   {
     title: "Services",
     icon: Utensils,
-    href: "/admin/services",
+    href: '/admin/services',
+    children: [
+      { title: 'Service Categories', href: '/admin/service-categories' },
+      { title: 'Service List', href: '/admin/services' },
+    ],
   },
   {
     title: "Promotions",

@@ -15,6 +15,7 @@ public interface BookingService {
     BookingResponse updateBooking(String id, BookingUpdateRequest request);
     void deleteBooking(String id);
     BookingResponse getBookingById(String id);
+    BookingResponse getBookingByCode(String code);
     Page<BookingResponse> getAllBookings(Pageable pageable);
     Page<BookingResponse> getBookingsByBranch(String branchId, Pageable pageable);
     Page<BookingResponse> getBookingsByCustomer(String customerId, Pageable pageable);
@@ -26,4 +27,5 @@ public interface BookingService {
     BookingResponse checkOutBooking(String bookingId, String checkedOutBy);
     BookingResponse markNoShow(String bookingId, String reason);
     void autoConfirmAfterPayment(String bookingId);
+    BookingResponse checkoutComplete(com.aurora.backend.dto.request.CheckoutRequest request);
 }

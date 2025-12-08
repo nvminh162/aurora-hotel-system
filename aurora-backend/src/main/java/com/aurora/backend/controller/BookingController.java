@@ -7,6 +7,7 @@ import com.aurora.backend.dto.request.BookingConfirmRequest;
 import com.aurora.backend.dto.request.BookingCreationRequest;
 import com.aurora.backend.dto.request.BookingModificationRequest;
 import com.aurora.backend.dto.request.BookingUpdateRequest;
+import com.aurora.backend.dto.request.CheckoutRequest;
 import com.aurora.backend.dto.response.ApiResponse;
 import com.aurora.backend.dto.response.BookingCancellationResponse;
 import com.aurora.backend.dto.response.BookingResponse;
@@ -39,6 +40,16 @@ public class BookingController {
         return ApiResponse.<BookingResponse>builder()
                 .code(HttpStatus.CREATED.value())
                 .message("Booking created successfully")
+                .result(response)
+                .build();
+    }
+    
+    @PostMapping("/checkout")
+    public ApiResponse<BookingResponse> checkoutComplete(@Valid @RequestBody CheckoutRequest request) {
+        BookingResponse response = bookingService.checkoutComplete(request);
+        return ApiResponse.<BookingResponse>builder()
+                .code(HttpStatus.CREATED.value())
+                .message("Booking completed successfully")
                 .result(response)
                 .build();
     }
@@ -75,6 +86,46 @@ public class BookingController {
                 .build();
     }
 
+    // Public endpoint for guest booking lookup (no authentication required)
+    @GetMapping("/public/{id}")
+    public ApiResponse<BookingResponse> getBookingByIdPublic(@PathVariable String id) {
+        BookingResponse response = bookingService.getBookingById(id);
+        return ApiResponse.<BookingResponse>builder()
+                .code(HttpStatus.OK.value())
+                .message("Booking retrieved successfully")
+                .result(response)
+                .build();
+    }
+
+    // Public endpoint for guest booking lookup by code (no authentication required)
+    @GetMapping("/public/code/{code}")
+    public ApiResponse<BookingResponse> getBookingByCodePublic(@PathVariable String code) {
+        BookingResponse response = bookingService.getBookingByCode(code);
+        return ApiResponse.<BookingResponse>builder()
+                .code(HttpStatus.OK.value())
+                .message("Booking retrieved successfully")
+                .result(response)
+                .build();
+    }
+
+    @GetMapping("/my-bookings")
+    @RequirePermission(PermissionConstants.Customer.BOOKING_VIEW_OWN)
+    public ApiResponse<Page<BookingResponse>> getMyBookings(
+            @RequestParam String customerId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "checkin") String sortBy,
+            @RequestParam(defaultValue = "desc") String sortDir) {
+        Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
+        Page<BookingResponse> response = bookingService.getBookingsByCustomer(customerId, pageable);
+        return ApiResponse.<Page<BookingResponse>>builder()
+                .code(HttpStatus.OK.value())
+                .message("Customer bookings retrieved successfully")
+                .result(response)
+                .build();
+    }
+
     @GetMapping
     @RequirePermission(PermissionConstants.Staff.BOOKING_VIEW_ALL)
     public ApiResponse<Page<BookingResponse>> getAllBookings(
@@ -95,7 +146,7 @@ public class BookingController {
     @GetMapping("/search")
     @RequirePermission(PermissionConstants.Staff.BOOKING_VIEW_ALL)
     public ApiResponse<Page<BookingResponse>> searchBookings(
-            @RequestParam(required = false) String hotelId,
+            @RequestParam(required = false) String branchId,
             @RequestParam(required = false) String customerId,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "0") int page,
@@ -104,7 +155,7 @@ public class BookingController {
             @RequestParam(defaultValue = "desc") String sortDir) {
         Sort.Direction direction = sortDir.equalsIgnoreCase("desc") ? Sort.Direction.DESC : Sort.Direction.ASC;
         Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sortBy));
-        Page<BookingResponse> response = bookingService.searchBookings(hotelId, customerId, status, pageable);
+        Page<BookingResponse> response = bookingService.searchBookings(branchId, customerId, status, pageable);
         return ApiResponse.<Page<BookingResponse>>builder()
                 .code(HttpStatus.OK.value())
                 .message("Bookings searched successfully")

@@ -5,7 +5,6 @@ import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Set;
 
 @Data
@@ -16,6 +15,8 @@ import java.util.Set;
 public class RoomTypeCreationRequest {
     @NotBlank(message = "BRANCH_ID_REQUIRED")
     String branchId;
+    
+    String categoryId; // Room category: Standard, Deluxe, Presidential Suite
     
     @NotBlank(message = "ROOM_TYPE_NAME_REQUIRED")
     String name;
@@ -46,5 +47,5 @@ public class RoomTypeCreationRequest {
     
     Boolean refundable;
     Set<String> amenityIds;
-    List<String> images;
+    String imageUrl; // Ảnh đại diện cho room type
 }
