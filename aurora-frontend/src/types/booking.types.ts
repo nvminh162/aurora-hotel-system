@@ -14,6 +14,10 @@ export interface Booking {
   branchName: string;
   customerId: string;
   customerName: string;
+  // Guest information (for walk-in guests)
+  guestFullName?: string;
+  guestEmail?: string;
+  guestPhone?: string;
   checkin: string; // LocalDate as ISO string
   checkout: string;
   totalPrice: number;
@@ -28,15 +32,16 @@ export type BookingStatus =
   | 'CONFIRMED' 
   | 'CHECKED_IN' 
   | 'CHECKED_OUT' 
+  | 'COMPLETED'
   | 'CANCELLED' 
   | 'NO_SHOW';
 
 export type PaymentStatus = 
-  | 'PENDING' 
-  | 'PAID' 
+  | 'PENDING'
+  | 'DEPOSIT_PAID'
   | 'PARTIALLY_PAID' 
-  | 'REFUNDED' 
-  | 'FAILED';
+  | 'PAID' 
+  | 'REFUNDED';
 
 export interface BookingCreationRequest {
   branchId: string;
@@ -72,7 +77,7 @@ export interface BookingCancellationResponse {
 }
 
 export interface BookingSearchParams {
-  hotelId?: string;
+  branchId?: string;
   customerId?: string;
   status?: BookingStatus;
   page?: number;
@@ -87,14 +92,15 @@ export const BOOKING_STATUS_CONFIG: Record<BookingStatus, { label: string; varia
   CONFIRMED: { label: 'Đã xác nhận', variant: 'success' },
   CHECKED_IN: { label: 'Đã nhận phòng', variant: 'default' },
   CHECKED_OUT: { label: 'Đã trả phòng', variant: 'secondary' },
+  COMPLETED: { label: 'Hoàn thành', variant: 'success' },
   CANCELLED: { label: 'Đã hủy', variant: 'destructive' },
   NO_SHOW: { label: 'Không đến', variant: 'outline' },
 };
 
 export const PAYMENT_STATUS_CONFIG: Record<PaymentStatus, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' | 'success' | 'warning' }> = {
   PENDING: { label: 'Chờ thanh toán', variant: 'warning' },
-  PAID: { label: 'Đã thanh toán', variant: 'success' },
+  DEPOSIT_PAID: { label: 'Đã đặt cọc', variant: 'secondary' },
   PARTIALLY_PAID: { label: 'Thanh toán một phần', variant: 'secondary' },
+  PAID: { label: 'Đã thanh toán', variant: 'success' },
   REFUNDED: { label: 'Đã hoàn tiền', variant: 'outline' },
-  FAILED: { label: 'Thất bại', variant: 'destructive' },
 };
