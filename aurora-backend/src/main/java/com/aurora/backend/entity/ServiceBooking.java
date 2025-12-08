@@ -34,7 +34,7 @@ public class ServiceBooking extends BaseEntity {
     Service service;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "customer_id")
+    @JoinColumn(name = "customer_id", nullable = true)
     User customer; // Can be null for walk-in guests (booking without customer)
 
     @ManyToOne(fetch = FetchType.LAZY)

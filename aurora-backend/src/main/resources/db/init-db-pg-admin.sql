@@ -1158,6 +1158,10 @@ BEGIN
     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'bookings' AND column_name = 'customer_id' AND is_nullable = 'NO') THEN
         ALTER TABLE bookings ALTER COLUMN customer_id DROP NOT NULL;
     END IF;
+    -- Make customer_id nullable in service_bookings for walk-in guests
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'service_bookings' AND column_name = 'customer_id' AND is_nullable = 'NO') THEN
+        ALTER TABLE service_bookings ALTER COLUMN customer_id DROP NOT NULL;
+    END IF;
 END $$;
 
 INSERT INTO bookings (
