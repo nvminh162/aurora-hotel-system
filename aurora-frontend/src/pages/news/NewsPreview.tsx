@@ -9,6 +9,10 @@ import { useAppDispatch, useAppSelector } from "@/hooks/useRedux";
 import { fetchAllNews, clearCurrentNews } from "@/features/slices/newsSlice";
 import LoadingScreen from "@/components/custom/LoadingScreen";
 
+import "@/styles/tiptap-content.scss";
+import '@/styles/_variables.scss';
+import '@/styles/_keyframe-animations.scss';
+
 export default function NewsPreview() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();

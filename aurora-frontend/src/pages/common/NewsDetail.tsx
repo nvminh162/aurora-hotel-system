@@ -9,6 +9,10 @@ import { fetchPublicNewsBySlug, clearCurrentNews } from "@/features/slices/newsS
 import LoadingScreen from "@/components/custom/LoadingScreen";
 import VideoHero from "@/components/custom/VideoHero";
 
+import "@/styles/tiptap-content.scss";
+import '@/styles/_variables.scss';
+import '@/styles/_keyframe-animations.scss';
+
 export default function NewsDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
