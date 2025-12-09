@@ -105,8 +105,7 @@ VALUES (gen_random_uuid(), 'BOOKING_APPROVE', 'Phê duyệt đặt phòng đặc
        (gen_random_uuid(), 'DASHBOARD_VIEW_MANAGER', 'Truy cập dashboard quản lý branch', CURRENT_TIMESTAMP,
         CURRENT_TIMESTAMP, 0, false),
        -- Event permissions for managers (view only)
-       (gen_random_uuid(), 'EVENT_VIEW', 'Xem sự kiện điều chỉnh giá phòng', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, false)
-        CURRENT_TIMESTAMP, 0, false),
+       (gen_random_uuid(), 'EVENT_VIEW', 'Xem sự kiện điều chỉnh giá phòng', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0, false),
        (gen_random_uuid(), 'STAFF_CREATE', 'Tạo tài khoản nhân viên mới', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0,
         false),
        (gen_random_uuid(), 'STAFF_UPDATE', 'Cập nhật thông tin nhân viên', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0,
@@ -321,8 +320,7 @@ WHERE r.name = 'MANAGER'
                  'STAFF_VIEW',
                  'DASHBOARD_VIEW_MANAGER',
                  -- Event permissions for managers (view only)
-                 'EVENT_VIEW'
-                 'DASHBOARD_VIEW_MANAGER',
+                 'EVENT_VIEW',
                  'STAFF_CREATE',
                  'STAFF_UPDATE',
                  'CUSTOMER_CREATE',
