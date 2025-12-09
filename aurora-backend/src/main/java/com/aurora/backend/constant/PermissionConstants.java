@@ -37,6 +37,7 @@ public final class PermissionConstants {
         public static final String CHECKIN_PROCESS = "CHECKIN_PROCESS";
         public static final String CHECKOUT_PROCESS = "CHECKOUT_PROCESS";
         public static final String CUSTOMER_VIEW = "CUSTOMER_VIEW";
+        public static final String CUSTOMER_CREATE = "CUSTOMER_CREATE";
         public static final String PAYMENT_VIEW_ALL = "PAYMENT_VIEW_ALL";
         public static final String SERVICE_MANAGE = "SERVICE_MANAGE";
         public static final String DASHBOARD_VIEW_STAFF = "DASHBOARD_VIEW_STAFF";
@@ -61,6 +62,11 @@ public final class PermissionConstants {
         public static final String REPORT_VIEW = "REPORT_VIEW";
         public static final String REPORT_EXPORT = "REPORT_EXPORT";
         public static final String STAFF_VIEW = "STAFF_VIEW";
+        public static final String STAFF_CREATE = "STAFF_CREATE";
+        public static final String STAFF_UPDATE = "STAFF_UPDATE";
+        public static final String CUSTOMER_CREATE = "CUSTOMER_CREATE";
+        public static final String BRANCH_ASSIGN_STAFF = "BRANCH_ASSIGN_STAFF";
+        public static final String PERMISSION_VIEW = "PERMISSION_VIEW";
         public static final String DASHBOARD_VIEW_MANAGER = "DASHBOARD_VIEW_MANAGER";
         
         // Shift management permissions for managers
@@ -70,6 +76,9 @@ public final class PermissionConstants {
         public static final String SHIFT_ASSIGN = "SHIFT_ASSIGN";
         public static final String SHIFT_UNASSIGN = "SHIFT_UNASSIGN";
         public static final String SHIFT_VIEW_ALL = "SHIFT_VIEW_ALL";
+        
+        // Event permissions for managers (view only)
+        public static final String EVENT_VIEW = "EVENT_VIEW";
     }
 
     public static final class Admin {
@@ -100,5 +109,13 @@ public final class PermissionConstants {
         public static final String DOCUMENT_CREATE = "DOCUMENT_CREATE";
         public static final String DOCUMENT_UPDATE = "DOCUMENT_UPDATE";
         public static final String DOCUMENT_DELETE = "DOCUMENT_DELETE";
+        
+        // Event permissions for admins (full control)
+        public static final String EVENT_CREATE = "EVENT_CREATE";
+        public static final String EVENT_UPDATE = "EVENT_UPDATE";
+        public static final String EVENT_DELETE = "EVENT_DELETE";
+        public static final String EVENT_ACTIVATE = "EVENT_ACTIVATE";
+        public static final String EVENT_COMPLETE = "EVENT_COMPLETE";
+        public static final String EVENT_CANCEL = "EVENT_CANCEL";
     }
 }
