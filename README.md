@@ -34,12 +34,12 @@
 
 ## 👥 Team Members
 
-| Name | Role | GitHub |
-|------|------|--------|
-| **Nguyễn Trần Gia Sĩ** | Team Lead & Backend Developer | [@giasinguyen](https://github.com/giasinguyen) |
-| **Nguyễn Văn Minh** | Frontend Developer | [@nvminh162](https://github.com/nvminh162) |
-| **Nguyễn Trung Nguyên** | Backend Developer | [@NguyenNguyen0](https://github.com/NguyenNguyen0) |
-| **Nguyễn Duy Khải** | Frontend Developer | [@NguyenDuyKhai2](https://github.com/NguyenDuyKhai2) |
+| Name | GitHub |
+|------|--------|
+| **Nguyễn Trần Gia Sĩ** | [@giasinguyen](https://github.com/giasinguyen) |
+| **Nguyễn Văn Minh** | [@nvminh162](https://github.com/nvminh162) |
+| **Nguyễn Trung Nguyên** | [@NguyenNguyen0](https://github.com/NguyenNguyen0) |
+| **Nguyễn Duy Khải** | [@NguyenDuyKhai2](https://github.com/NguyenDuyKhai2) |
 
 ---
 
@@ -760,24 +760,6 @@ chore: Update dependencies
 This project is developed for **educational purposes** as part of the **Lập Trình WWW (Web Programming)** course at **Industrial University of Ho Chi Minh City (IUH)**.
 
 **© 2024-2025 Aurora Development Team. All Rights Reserved.**
-
----
-
-## 📞 Contact & Support
-
-### Development Team
-- 👨‍💻 **Team Lead**: Nguyễn Trần Gia Sĩ - [@giasinguyen](https://github.com/giasinguyen)
-- 📧 **Email**: [Contact via GitHub Issues](https://github.com/giasinguyen/aurora-hotel-system/issues)
-
-### Repository
-- 🔗 **GitHub**: [aurora-hotel-system](https://github.com/giasinguyen/aurora-hotel-system)
-- 📝 **Issue Tracker**: [Report bugs or request features](https://github.com/giasinguyen/aurora-hotel-system/issues)
-- 💬 **Discussions**: [Join community discussions](https://github.com/giasinguyen/aurora-hotel-system/discussions)
-
-### Academic Information
-- 🏫 **Institution**: Industrial University of Ho Chi Minh City (IUH)
-- 📚 **Course**: Lập Trình WWW (Web Programming)
-- 📅 **Academic Year**: 2025
 
 ---
 
