@@ -5,7 +5,6 @@ import {
   BedDouble,
   Utensils,
   UserCog,
-  Gift,
   BarChart3,
   ChevronLeft,
   ChevronRight,
@@ -65,11 +64,11 @@ const menuItems = [
     icon: Clock,
     href: '/manager/shifts',
   },
-  {
-    title: 'Promotions',
-    icon: Gift,
-    href: '/manager/promotions',
-  },
+  // {
+  //   title: 'Promotions',
+  //   icon: Gift,
+  //   href: '/manager/promotions',
+  // },
   {
     title: 'Reports',
     icon: BarChart3,
